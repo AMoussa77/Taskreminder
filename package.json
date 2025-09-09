@@ -35,7 +35,7 @@
     "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "publish": {
       "provider": "github",
-      "owner": "YOUR_GITHUB_USERNAME",
+      "owner": "AMoussa77",
       "repo": "task-reminder"
     },
     "win": {
