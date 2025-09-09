@@ -1,12 +1,12 @@
 {
   "name": "task-reminder",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Electron app for task management with alarm functionality",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
-    "build": "electron-builder",
+    "build": "electron-builder --publish=never",
     "dist": "electron-builder --publish=never",
     "publish": "electron-builder --publish=always"
   },
