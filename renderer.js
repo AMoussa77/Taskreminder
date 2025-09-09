@@ -83,23 +83,36 @@ class TaskManager {
         });
 
         // Auto-updater event listeners
+        ipcRenderer.on('update-checking', () => {
+            console.log('Checking for updates...');
+        });
+
         ipcRenderer.on('update-available', (event, info) => {
+            console.log('Update available:', info);
             this.showUpdateAvailableModal(info);
         });
 
+        ipcRenderer.on('update-not-available', (event, info) => {
+            console.log('No updates available:', info);
+        });
+
         ipcRenderer.on('download-progress', (event, progressObj) => {
+            console.log('Download progress:', progressObj);
             this.updateDownloadProgress(progressObj);
         });
 
         ipcRenderer.on('update-downloaded', (event, info) => {
+            console.log('Update downloaded:', info);
             this.showUpdateDownloadedModal(info);
         });
 
         ipcRenderer.on('update-error', (event, error) => {
+            console.error('Update error:', error);
             this.showUpdateErrorModal(error);
         });
 
         ipcRenderer.on('update-check-timeout', () => {
+            console.log('Update check timeout');
             this.showUpdateTimeoutModal();
         });
 
@@ -662,7 +675,39 @@ class TaskManager {
         document.body.appendChild(modal);
     }
 
+    showDownloadProgressModal() {
+        const modal = document.createElement('div');
+        modal.className = 'modal show';
+        modal.id = 'downloadProgressModal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-download"></i> Downloading Update</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-text">0%</div>
+                    </div>
+                    <div class="download-info">
+                        <div class="download-speed">Speed: 0 KB/s</div>
+                        <div class="download-size">0 MB / 0 MB</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
     showUpdateDownloadedModal(info) {
+        // Remove download progress modal if it exists
+        const progressModal = document.getElementById('downloadProgressModal');
+        if (progressModal) {
+            progressModal.remove();
+        }
+
         const modal = document.createElement('div');
         modal.className = 'modal show';
         modal.innerHTML = `
@@ -725,9 +770,21 @@ class TaskManager {
 
     async downloadUpdate() {
         try {
+            console.log('Starting update download...');
+            // Close the update available modal
+            const modal = document.querySelector('.modal.show');
+            if (modal) {
+                modal.remove();
+            }
+            
+            // Show download progress modal
+            this.showDownloadProgressModal();
+            
+            // Trigger the download
             await ipcRenderer.invoke('check-for-updates');
         } catch (error) {
-            console.error('Error checking for updates:', error);
+            console.error('Error downloading update:', error);
+            this.showUpdateErrorModal('Failed to download update: ' + error.message);
         }
     }
 

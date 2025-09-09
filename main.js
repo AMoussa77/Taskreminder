@@ -11,10 +11,12 @@ const MAX_TIMEOUT_MS = 0x7fffffff; // Maximum setTimeout delay (~24.8 days)
 
 // Configure auto-updater
 // Only enable auto-updater in production (packaged) mode
-if (process.env.NODE_ENV === 'production' || !app.isPackaged) {
-  autoUpdater.checkForUpdatesAndNotify();
+if (app.isPackaged) {
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.checkForUpdatesAndNotify();
+} else {
+  console.log('Auto-updater disabled in development mode');
 }
 
 // Load tasks from file
@@ -173,6 +175,9 @@ app.on('window-all-closed', () => {
 // Auto-updater event handlers
 autoUpdater.on('checking-for-update', () => {
   console.log('Checking for update...');
+  if (mainWindow) {
+    mainWindow.webContents.send('update-checking');
+  }
 });
 
 autoUpdater.on('update-available', (info) => {
@@ -184,6 +189,9 @@ autoUpdater.on('update-available', (info) => {
 
 autoUpdater.on('update-not-available', (info) => {
   console.log('Update not available:', info);
+  if (mainWindow) {
+    mainWindow.webContents.send('update-not-available', info);
+  }
 });
 
 autoUpdater.on('error', (err) => {
@@ -205,17 +213,23 @@ autoUpdater.on('download-progress', (progressObj) => {
 });
 
 autoUpdater.on('update-downloaded', (info) => {
-  console.log('Update downloaded:', info);
+  console.log('Update downloaded successfully:', info);
   if (mainWindow) {
     mainWindow.webContents.send('update-downloaded', info);
   }
 });
 
 // Add timeout for update checks
+let updateTimeout;
 autoUpdater.on('checking-for-update', () => {
   console.log('Checking for update...');
+  // Clear any existing timeout
+  if (updateTimeout) {
+    clearTimeout(updateTimeout);
+  }
   // Set a timeout to prevent hanging
-  setTimeout(() => {
+  updateTimeout = setTimeout(() => {
+    console.log('Update check timeout');
     if (mainWindow) {
       mainWindow.webContents.send('update-check-timeout');
     }
