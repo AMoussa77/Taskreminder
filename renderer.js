@@ -95,6 +95,14 @@ class TaskManager {
             this.showUpdateDownloadedModal(info);
         });
 
+        ipcRenderer.on('update-error', (event, error) => {
+            this.showUpdateErrorModal(error);
+        });
+
+        ipcRenderer.on('update-check-timeout', () => {
+            this.showUpdateTimeoutModal();
+        });
+
         // Confirm modal events
         const closeConfirm = document.getElementById('closeConfirmModal');
         const cancelConfirm = document.getElementById('cancelConfirm');
@@ -736,7 +744,61 @@ class TaskManager {
             await ipcRenderer.invoke('check-for-updates');
         } catch (error) {
             console.error('Error checking for updates:', error);
+            this.showUpdateErrorModal('Failed to check for updates. Please try again later.');
         }
+    }
+
+    showUpdateErrorModal(error) {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Update Error</h3>
+                    <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>An error occurred while checking for updates:</p>
+                    <p style="color: #e74c3c; font-size: 0.9em;">${error}</p>
+                    <p>This might be because:</p>
+                    <ul style="text-align: left; margin: 10px 0;">
+                        <li>No internet connection</li>
+                        <li>GitHub repository doesn't have a release yet</li>
+                        <li>You're running in development mode</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" onclick="this.closest('.modal').remove()">OK</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    showUpdateTimeoutModal() {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-clock"></i> Update Check Timeout</h3>
+                    <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>The update check is taking longer than expected.</p>
+                    <p>This might be because:</p>
+                    <ul style="text-align: left; margin: 10px 0;">
+                        <li>Slow internet connection</li>
+                        <li>GitHub servers are busy</li>
+                        <li>No releases available yet</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" onclick="this.closest('.modal').remove()">OK</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
     }
 }
 

@@ -10,9 +10,12 @@ let alarms = new Map();
 const MAX_TIMEOUT_MS = 0x7fffffff; // Maximum setTimeout delay (~24.8 days)
 
 // Configure auto-updater
-autoUpdater.checkForUpdatesAndNotify();
-autoUpdater.autoDownload = true;
-autoUpdater.autoInstallOnAppQuit = true;
+// Only enable auto-updater in production (packaged) mode
+if (process.env.NODE_ENV === 'production' || !app.isPackaged) {
+  autoUpdater.checkForUpdatesAndNotify();
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+}
 
 // Load tasks from file
 function loadTasks() {
@@ -173,18 +176,21 @@ autoUpdater.on('checking-for-update', () => {
 });
 
 autoUpdater.on('update-available', (info) => {
-  console.log('Update available.');
+  console.log('Update available:', info);
   if (mainWindow) {
     mainWindow.webContents.send('update-available', info);
   }
 });
 
 autoUpdater.on('update-not-available', (info) => {
-  console.log('Update not available.');
+  console.log('Update not available:', info);
 });
 
 autoUpdater.on('error', (err) => {
-  console.log('Error in auto-updater. ' + err);
+  console.error('Error in auto-updater:', err);
+  if (mainWindow) {
+    mainWindow.webContents.send('update-error', err.message);
+  }
 });
 
 autoUpdater.on('download-progress', (progressObj) => {
@@ -199,10 +205,21 @@ autoUpdater.on('download-progress', (progressObj) => {
 });
 
 autoUpdater.on('update-downloaded', (info) => {
-  console.log('Update downloaded');
+  console.log('Update downloaded:', info);
   if (mainWindow) {
     mainWindow.webContents.send('update-downloaded', info);
   }
+});
+
+// Add timeout for update checks
+autoUpdater.on('checking-for-update', () => {
+  console.log('Checking for update...');
+  // Set a timeout to prevent hanging
+  setTimeout(() => {
+    if (mainWindow) {
+      mainWindow.webContents.send('update-check-timeout');
+    }
+  }, 30000); // 30 seconds timeout
 });
 
 // IPC handlers
