@@ -2,8 +2,8 @@
 
 A modern task management application built with Electron.js that allows you to create unlimited tasks with custom alarm functionality. Features automatic updates and cross-platform support.
 
-[![GitHub release](https://img.shields.io/github/release/AMoussa77/task-reminder.svg)](https://github.com/AMoussa77/task-reminder/releases)
-[![GitHub downloads](https://img.shields.io/github/downloads/AMoussa77/task-reminder/total.svg)](https://github.com/AMoussa77/task-reminder/releases)
+[![GitHub release](https://img.shields.io/github/release/AMoussa77/Taskreminder.svg)](https://github.com/AMoussa77/Taskreminder/releases)
+[![GitHub downloads](https://img.shields.io/github/downloads/AMoussa77/Taskreminder/total.svg)](https://github.com/AMoussa77/Taskreminder/releases)
 
 ## Features
 
@@ -22,7 +22,7 @@ A modern task management application built with Electron.js that allows you to c
 ## Installation
 
 ### Option 1: Download Latest Release (Recommended)
-1. Go to the [Releases page](https://github.com/AMoussa77/task-reminder/releases)
+1. Go to the [Releases page](https://github.com/AMoussa77/Taskreminder/releases)
 2. Download the installer for your operating system
 3. Run the installer and follow the setup wizard
 4. The app will automatically check for updates when you launch it
@@ -30,7 +30,7 @@ A modern task management application built with Electron.js that allows you to c
 ### Option 2: Build from Source
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/AMoussa77/task-reminder.git
+   git clone https://github.com/AMoussa77/Taskreminder.git
    cd task-reminder
    ```
 
@@ -117,7 +117,7 @@ This will create distributable packages in the `dist` folder.
    "publish": {
      "provider": "github",
      "owner": "AMoussa77",
-     "repo": "task-reminder"
+     "repo": "Taskreminder"
    }
    ```
 3. **Initialize Git** (if not already done):
@@ -126,7 +126,7 @@ This will create distributable packages in the `dist` folder.
    git add .
    git commit -m "Initial commit"
    git branch -M main
-   git remote add origin https://github.com/AMoussa77/task-reminder.git
+   git remote add origin https://github.com/AMoussa77/Taskreminder.git
    git push -u origin main
    ```
 

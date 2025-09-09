@@ -36,7 +36,7 @@
     "publish": {
       "provider": "github",
       "owner": "AMoussa77",
-      "repo": "task-reminder"
+      "repo": "Taskreminder"
     },
     "win": {
       "target": [
