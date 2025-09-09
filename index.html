@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Reminder</title>
+    <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <div>
+                    <div class="logo-container">
+                        <img src="assets/icon.svg" alt="Task Reminder Logo" class="app-logo">
+                        <h1>Task Reminder</h1>
+                    </div>
+                    <p>Manage your tasks with custom alarms</p>
+                </div>
+                <div class="header-actions">
+                    <button id="checkUpdatesBtn" class="btn btn-secondary" title="Check for Updates">
+                        <i class="fas fa-sync-alt"></i> Check Updates
+                    </button>
+                    <button id="themeToggle" class="theme-toggle" title="Toggle Dark Mode">
+                        <i class="fas fa-moon" id="themeIcon"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div class="add-task-section">
+            <div class="add-task-form">
+                <input type="text" id="taskTitle" placeholder="Enter task title..." required>
+                <textarea id="taskDescription" placeholder="Enter task description (optional)"></textarea>
+                
+                <div class="alarm-section">
+                    <label class="alarm-toggle">
+                        <input type="checkbox" id="alarmEnabled">
+                        <span class="checkmark"></span>
+                        Set Alarm
+                    </label>
+                    
+                    <div class="alarm-mode" id="alarmMode" style="display:none;">
+                        <label>
+                            <input type="radio" name="alarmMode" value="duration" checked>
+                            By remaining time
+                        </label>
+                        <label style="margin-left: 15px;">
+                            <input type="radio" name="alarmMode" value="datetime">
+                            By date & time
+                        </label>
+                    </div>
+
+                    <div class="alarm-inputs" id="alarmInputs">
+                        <div class="time-input-group">
+                            <label>Hours</label>
+                            <input type="number" id="alarmHours" min="0" max="23" value="0">
+                        </div>
+                        <div class="time-input-group">
+                            <label>Minutes</label>
+                            <input type="number" id="alarmMinutes" min="0" max="59" value="0">
+                        </div>
+                        <div class="time-input-group">
+                            <label>Seconds</label>
+                            <input type="number" id="alarmSeconds" min="0" max="59" value="0">
+                        </div>
+                    </div>
+
+                    <div class="datetime-inputs" id="datetimeInputs">
+                        <div class="time-input-group">
+                            <label>Date & Time</label>
+                            <input type="datetime-local" id="alarmDateTime">
+                        </div>
+                    </div>
+                </div>
+                
+                <button id="addTaskBtn" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Task
+                </button>
+            </div>
+        </div>
+
+        <div class="tasks-section">
+            <div class="tasks-header">
+                <h2>Your Tasks</h2>
+                <div class="task-stats">
+                    <span id="totalTasks">0</span> total, 
+                    <span id="completedTasks">0</span> completed, 
+                    <span id="pendingTasks">0</span> pending
+                </div>
+                <div>
+                    <button id="clearAllBtn" class="btn btn-danger"><i class="fas fa-trash"></i> Clear All</button>
+                </div>
+            </div>
+            
+            <div class="tasks-container" id="tasksContainer">
+                <!-- Tasks will be dynamically added here -->
+            </div>
+        </div>
+
+        <!-- Alarm Modal -->
+        <div id="alarmModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-bell"></i> Alarm Triggered!</h3>
+                    <button class="close-btn" id="closeAlarmModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p id="alarmMessage">Time's up for your task!</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" id="dismissAlarm">Dismiss</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirm Modal -->
+        <div id="confirmModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-question-circle"></i> Confirm</h3>
+                    <button class="close-btn" id="closeConfirmModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p id="confirmMessage">Are you sure?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="cancelConfirm">Cancel</button>
+                    <button class="btn btn-primary" id="okConfirm">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+<footer class="app-footer">
+    <div class="footer-content">
+        <span class="app-name">"Task Reminder" - Developed by</span>
+        <a href="https://x.com/AmrMoussa77" target="_blank" rel="noopener noreferrer" class="credit-link">
+            <i class="fa-brands fa-x-twitter"></i>
+            <span>A Moussa - x.com/AmrMoussa77</span>
+        </a>
+    </div>
+</footer>
+</html>
+
+
