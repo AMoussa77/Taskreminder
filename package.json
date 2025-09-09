@@ -1,6 +1,6 @@
 {
   "name": "task-reminder",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Electron app for task management with alarm functionality",
   "main": "main.js",
   "scripts": {

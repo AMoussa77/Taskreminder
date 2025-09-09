@@ -74,6 +74,17 @@ body {
     justify-content: center;
     gap: 15px;
     margin-bottom: 10px;
+    position: relative;
+}
+
+.version-badge {
+    background: var(--accent);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-left: 8px;
 }
 
 .app-logo {
