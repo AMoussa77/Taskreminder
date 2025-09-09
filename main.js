@@ -12,7 +12,7 @@ const MAX_TIMEOUT_MS = 0x7fffffff; // Maximum setTimeout delay (~24.8 days)
 // Configure auto-updater
 // Only enable auto-updater in production (packaged) mode
 if (app.isPackaged) {
-  autoUpdater.autoDownload = true;
+  autoUpdater.autoDownload = false; // Manual download control
   autoUpdater.autoInstallOnAppQuit = true;
   autoUpdater.checkForUpdatesAndNotify();
 } else {
@@ -182,6 +182,8 @@ autoUpdater.on('checking-for-update', () => {
 
 autoUpdater.on('update-available', (info) => {
   console.log('Update available:', info);
+  console.log('Version:', info.version);
+  console.log('Release notes:', info.releaseNotes);
   if (mainWindow) {
     mainWindow.webContents.send('update-available', info);
   }
@@ -369,6 +371,19 @@ ipcMain.handle('check-for-updates', () => {
   return autoUpdater.checkForUpdates();
 });
 
+ipcMain.handle('download-update', async () => {
+  try {
+    console.log('Starting manual update download...');
+    const result = await autoUpdater.downloadUpdate();
+    console.log('Download initiated:', result);
+    return result;
+  } catch (error) {
+    console.error('Error starting download:', error);
+    throw error;
+  }
+});
+
 ipcMain.handle('quit-and-install', () => {
+  console.log('Installing update and restarting...');
   autoUpdater.quitAndInstall();
 });

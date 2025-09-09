@@ -780,8 +780,8 @@ class TaskManager {
             // Show download progress modal
             this.showDownloadProgressModal();
             
-            // Trigger the download
-            await ipcRenderer.invoke('check-for-updates');
+            // Trigger the actual download
+            await ipcRenderer.invoke('download-update');
         } catch (error) {
             console.error('Error downloading update:', error);
             this.showUpdateErrorModal('Failed to download update: ' + error.message);
