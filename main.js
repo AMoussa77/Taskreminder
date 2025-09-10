@@ -204,6 +204,7 @@ autoUpdater.on('error', (err) => {
 });
 
 autoUpdater.on('download-progress', (progressObj) => {
+  console.log('Download progress event received:', progressObj);
   let log_message = "Download speed: " + progressObj.bytesPerSecond;
   log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
   log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
@@ -371,15 +372,34 @@ ipcMain.handle('check-for-updates', () => {
   return autoUpdater.checkForUpdates();
 });
 
-ipcMain.handle('download-update', async () => {
+ipcMain.handle('download-update', () => {
   try {
     console.log('Starting manual update download...');
-    const result = await autoUpdater.downloadUpdate();
-    console.log('Download initiated:', result);
-    return result;
+    
+    // Set a timeout to detect if download doesn't start
+    const downloadTimeout = setTimeout(() => {
+      console.log('Download timeout - no progress detected');
+      if (mainWindow) {
+        mainWindow.webContents.send('download-timeout');
+      }
+    }, 10000); // 10 seconds timeout
+    
+    // Clear timeout when progress starts
+    const originalProgressHandler = autoUpdater.listeners('download-progress')[0];
+    autoUpdater.removeAllListeners('download-progress');
+    autoUpdater.on('download-progress', (progressObj) => {
+      clearTimeout(downloadTimeout);
+      if (originalProgressHandler) {
+        originalProgressHandler(progressObj);
+      }
+    });
+    
+    autoUpdater.downloadUpdate();
+    console.log('Download initiated');
+    return { success: true, message: 'Download started' };
   } catch (error) {
     console.error('Error starting download:', error);
-    throw error;
+    return { success: false, error: error.message };
   }
 });
 

@@ -553,6 +553,11 @@ body {
     animation: fadeIn 0.3s ease;
 }
 
+/* Dark mode modal overlay */
+[data-theme="dark"] .modal {
+    background-color: rgba(0,0,0,0.8);
+}
+
 .modal.show {
     display: flex;
     align-items: center;
@@ -854,7 +859,72 @@ body {
     color: var(--text-primary);
 }
 
+/* Ensure all modal elements use dark mode - both .modal and .modal.show */
+[data-theme="dark"] .modal .modal-content,
+[data-theme="dark"] .modal.show .modal-content {
+    background: var(--bg-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .modal .modal-header,
+[data-theme="dark"] .modal.show .modal-header {
+    background: linear-gradient(135deg, var(--accent) 0%, #5a67d8 100%) !important;
+    color: white !important;
+}
+
+[data-theme="dark"] .modal .modal-body,
+[data-theme="dark"] .modal.show .modal-body {
+    color: var(--text-primary) !important;
+    background: var(--bg-secondary) !important;
+}
+
+[data-theme="dark"] .modal .modal-footer,
+[data-theme="dark"] .modal.show .modal-footer {
+    background: var(--bg-secondary) !important;
+    border-top: 1px solid var(--border-color) !important;
+}
+
+/* Force dark mode for all modal text elements */
+[data-theme="dark"] .modal * {
+    color: inherit;
+}
+
+[data-theme="dark"] .modal .modal-body * {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .modal .modal-header * {
+    color: white !important;
+}
+
 .download-speed,
 .download-size {
     font-family: monospace;
+}
+
+/* Dark mode progress modal elements */
+[data-theme="dark"] .progress-container {
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+    padding: 15px;
+    margin: 10px 0;
+}
+
+[data-theme="dark"] .progress-bar {
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] .progress-text {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .download-info {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .download-speed,
+[data-theme="dark"] .download-size {
+    color: var(--text-secondary);
 }

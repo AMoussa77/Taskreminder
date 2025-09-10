@@ -116,6 +116,11 @@ class TaskManager {
             this.showUpdateTimeoutModal();
         });
 
+        ipcRenderer.on('download-timeout', () => {
+            console.log('Download timeout');
+            this.showDownloadTimeoutModal();
+        });
+
         // Confirm modal events
         const closeConfirm = document.getElementById('closeConfirmModal');
         const cancelConfirm = document.getElementById('cancelConfirm');
@@ -781,7 +786,22 @@ class TaskManager {
             this.showDownloadProgressModal();
             
             // Trigger the actual download
-            await ipcRenderer.invoke('download-update');
+            const result = await ipcRenderer.invoke('download-update');
+            console.log('Download result:', result);
+            
+            if (!result.success) {
+                throw new Error(result.error || 'Download failed to start');
+            }
+            
+            // Set a fallback timeout to show error if no progress after 15 seconds
+            setTimeout(() => {
+                const progressModal = document.getElementById('downloadProgressModal');
+                if (progressModal && progressModal.querySelector('.progress-text').textContent === '0%') {
+                    console.log('No progress detected, showing timeout modal');
+                    this.showDownloadTimeoutModal();
+                }
+            }, 15000);
+            
         } catch (error) {
             console.error('Error downloading update:', error);
             this.showUpdateErrorModal('Failed to download update: ' + error.message);
@@ -852,6 +872,41 @@ class TaskManager {
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-primary" onclick="this.closest('.modal').remove()">OK</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    showDownloadTimeoutModal() {
+        // Remove download progress modal if it exists
+        const progressModal = document.getElementById('downloadProgressModal');
+        if (progressModal) {
+            progressModal.remove();
+        }
+
+        const modal = document.createElement('div');
+        modal.className = 'modal show';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Download Timeout</h3>
+                    <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>The download is taking longer than expected to start.</p>
+                    <p>This might be because:</p>
+                    <ul style="text-align: left; margin: 10px 0;">
+                        <li>No internet connection</li>
+                        <li>GitHub servers are busy</li>
+                        <li>No update available</li>
+                        <li>Firewall blocking the download</li>
+                    </ul>
+                    <p>Please try again later or check your internet connection.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+                    <button class="btn btn-primary" onclick="taskManager.downloadUpdate(); this.closest('.modal').remove();">Try Again</button>
                 </div>
             </div>
         `;
