@@ -98,3 +98,4 @@
 - [ ] Download completes successfully
 - [ ] Install prompt appears
 - [ ] App restarts with new version
+

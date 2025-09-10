@@ -82,44 +82,14 @@ class TaskManager {
             this.showAlarmModal(data);
         });
 
+        // Listen for open-settings event from main process
+        ipcRenderer.on('open-settings', () => {
+            this.showSettingsModal();
+        });
+
         // Auto-updater event listeners
-        ipcRenderer.on('update-checking', () => {
-            console.log('Checking for updates...');
-        });
-
         ipcRenderer.on('update-available', (event, info) => {
-            console.log('Update available:', info);
-            this.showUpdateAvailable(info);
-        });
-
-        ipcRenderer.on('update-not-available', (event, info) => {
-            console.log('No updates available:', info);
-            this.hideAllUpdateSections();
-        });
-
-        ipcRenderer.on('download-progress', (event, progressObj) => {
-            console.log('Download progress:', progressObj);
-            this.updateDownloadProgress(progressObj);
-        });
-
-        ipcRenderer.on('update-downloaded', (event, info) => {
-            console.log('Update downloaded:', info);
-            this.showUpdateDownloaded(info);
-        });
-
-        ipcRenderer.on('update-error', (event, error) => {
-            console.error('Update error:', error);
-            this.showUpdateErrorModal(error);
-        });
-
-        ipcRenderer.on('update-check-timeout', () => {
-            console.log('Update check timeout');
-            this.showUpdateTimeoutModal();
-        });
-
-        ipcRenderer.on('download-timeout', () => {
-            console.log('Download timeout');
-            this.showDownloadTimeoutModal();
+            this.showUpdateAvailableModal(info);
         });
 
         // Confirm modal events
@@ -154,16 +124,26 @@ class TaskManager {
             });
         }
 
-        // Theme toggle
-        const themeToggle = document.getElementById('themeToggle');
-        if (themeToggle) {
-            themeToggle.addEventListener('click', () => {
-                this.toggleTheme();
+        // Settings button
+        const settingsBtn = document.getElementById('settingsBtn');
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', () => {
+                this.showSettingsModal();
             });
         }
 
-        // Load saved theme
+        // Settings modal events
+        const closeSettingsModal = document.getElementById('closeSettingsModal');
+        const cancelSettings = document.getElementById('cancelSettings');
+        const saveSettings = document.getElementById('saveSettings');
+        
+        if (closeSettingsModal) closeSettingsModal.addEventListener('click', () => this.hideSettingsModal());
+        if (cancelSettings) cancelSettings.addEventListener('click', () => this.hideSettingsModal());
+        if (saveSettings) saveSettings.addEventListener('click', () => this.saveSettings());
+
+        // Load saved theme and settings
         this.loadTheme();
+        this.loadSettings();
     }
 
     async loadTasks() {
@@ -633,29 +613,10 @@ class TaskManager {
         return isNegative ? `-${timeString}` : timeString;
     }
 
-    toggleTheme() {
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        
-        document.documentElement.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-        
-        // Update icon
-        const themeIcon = document.getElementById('themeIcon');
-        if (themeIcon) {
-            themeIcon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-        }
-    }
 
     loadTheme() {
         const savedTheme = localStorage.getItem('theme') || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
-        
-        // Update icon
-        const themeIcon = document.getElementById('themeIcon');
-        if (themeIcon) {
-            themeIcon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-        }
     }
 
     // Auto-updater methods
@@ -681,349 +642,116 @@ class TaskManager {
         document.body.appendChild(modal);
     }
 
-    showDownloadProgressModal() {
-        const modal = document.createElement('div');
-        modal.className = 'modal show';
-        modal.id = 'downloadProgressModal';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3><i class="fas fa-download"></i> Downloading Update</h3>
-                </div>
-                <div class="modal-body">
-                    <div class="progress-container">
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 0%"></div>
-                        </div>
-                        <div class="progress-text">0%</div>
-                    </div>
-                    <div class="download-info">
-                        <div class="download-speed">Speed: 0 KB/s</div>
-                        <div class="download-size">0 MB / 0 MB</div>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-    }
-
-    showUpdateDownloadedModal(info) {
-        // Remove download progress modal if it exists
-        const progressModal = document.getElementById('downloadProgressModal');
-        if (progressModal) {
-            progressModal.remove();
-        }
-
-        const modal = document.createElement('div');
-        modal.className = 'modal show';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3><i class="fas fa-check-circle"></i> Update Downloaded</h3>
-                    <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <p>Update downloaded successfully!</p>
-                    <p>The application will restart to install the update.</p>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-primary" onclick="taskManager.installUpdate()">Install & Restart</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-    }
-
-    updateDownloadProgress(progressObj) {
-        // Find existing progress modal or create one
-        let progressModal = document.getElementById('updateProgressModal');
-        if (!progressModal) {
-            progressModal = document.createElement('div');
-            progressModal.id = 'updateProgressModal';
-            progressModal.className = 'modal show';
-            progressModal.innerHTML = `
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3><i class="fas fa-download"></i> Downloading Update</h3>
-                    </div>
-                    <div class="modal-body">
-                        <div class="progress-container">
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: 0%"></div>
-                            </div>
-                            <div class="progress-text">0%</div>
-                        </div>
-                        <div class="download-info">
-                            <div class="download-speed">Speed: 0 KB/s</div>
-                            <div class="download-size">0 MB / 0 MB</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(progressModal);
-        }
-
-        const progressFill = progressModal.querySelector('.progress-fill');
-        const progressText = progressModal.querySelector('.progress-text');
-        const downloadSpeed = progressModal.querySelector('.download-speed');
-        const downloadSize = progressModal.querySelector('.download-size');
-
-        if (progressFill) progressFill.style.width = `${progressObj.percent}%`;
-        if (progressText) progressText.textContent = `${Math.round(progressObj.percent)}%`;
-        if (downloadSpeed) downloadSpeed.textContent = `Speed: ${Math.round(progressObj.bytesPerSecond / 1024)} KB/s`;
-        if (downloadSize) downloadSize.textContent = `${Math.round(progressObj.transferred / 1024 / 1024)} MB / ${Math.round(progressObj.total / 1024 / 1024)} MB`;
-    }
 
     async downloadUpdate() {
         try {
-            console.log('Starting update download...');
-            
-            // Show integrated download progress UI
-            this.showUpdateProgress();
-            
-            // First try the normal download process
-            const result = await ipcRenderer.invoke('download-update');
-            console.log('Download result:', result);
-            
-            if (!result.success) {
-                // Show specific error message for disabled auto-updater
-                if (result.error && result.error.includes('development mode')) {
-                    this.showUpdateError(result.error);
-                } else {
-                    throw new Error(result.error || 'Download failed to start');
-                }
-                return;
-            }
-            
-            // Set a fallback timeout to show error if no progress after 15 seconds
-            setTimeout(() => {
-                const progressText = document.getElementById('updateProgressText');
-                if (progressText && progressText.textContent === '0%') {
-                    console.log('No progress detected, trying force download...');
-                    this.forceDownloadUpdate();
-                }
-            }, 15000);
-            
+            // Open the GitHub releases page in the browser
+            await ipcRenderer.invoke('open-download-page');
         } catch (error) {
-            console.error('Error downloading update:', error);
-            this.showUpdateError('Failed to download update: ' + error.message);
+            console.error('Error opening download page:', error);
         }
     }
 
-    async forceDownloadUpdate() {
-        try {
-            console.log('Force downloading update...');
-            const result = await ipcRenderer.invoke('force-download-update');
-            console.log('Force download result:', result);
-            
-            if (!result.success) {
-                this.showDownloadTimeoutModal();
-            }
-        } catch (error) {
-            console.error('Error force downloading:', error);
-            this.showDownloadTimeoutModal();
-        }
-    }
-
-    async installUpdate() {
-        try {
-            await ipcRenderer.invoke('quit-and-install');
-        } catch (error) {
-            console.error('Error installing update:', error);
-        }
-    }
 
     async checkForUpdates() {
         try {
             await ipcRenderer.invoke('check-for-updates');
         } catch (error) {
             console.error('Error checking for updates:', error);
-            this.showUpdateErrorModal('Failed to check for updates. Please try again later.');
         }
     }
 
-    showUpdateErrorModal(error) {
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3><i class="fas fa-exclamation-triangle"></i> Update Error</h3>
-                    <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <p>An error occurred while checking for updates:</p>
-                    <p style="color: #e74c3c; font-size: 0.9em;">${error}</p>
-                    <p>This might be because:</p>
-                    <ul style="text-align: left; margin: 10px 0;">
-                        <li>No internet connection</li>
-                        <li>GitHub repository doesn't have a release yet</li>
-                        <li>You're running in development mode</li>
-                    </ul>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-primary" onclick="this.closest('.modal').remove()">OK</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
+    // Settings functionality
+    showSettingsModal() {
+        const modal = document.getElementById('settingsModal');
+        if (modal) {
+            modal.classList.add('show');
+            this.loadSettingsToModal();
+        }
     }
 
-    showUpdateTimeoutModal() {
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3><i class="fas fa-clock"></i> Update Check Timeout</h3>
-                    <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <p>The update check is taking longer than expected.</p>
-                    <p>This might be because:</p>
-                    <ul style="text-align: left; margin: 10px 0;">
-                        <li>Slow internet connection</li>
-                        <li>GitHub servers are busy</li>
-                        <li>No releases available yet</li>
-                    </ul>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-primary" onclick="this.closest('.modal').remove()">OK</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
+    hideSettingsModal() {
+        const modal = document.getElementById('settingsModal');
+        if (modal) {
+            modal.classList.remove('show');
+        }
     }
 
-    showDownloadTimeoutModal() {
-        // Remove download progress modal if it exists
-        const progressModal = document.getElementById('downloadProgressModal');
-        if (progressModal) {
-            progressModal.remove();
+    loadSettingsToModal() {
+        // Load current settings into modal
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const minimizeToTrayToggle = document.getElementById('minimizeToTrayToggle');
+        const closeToTrayToggle = document.getElementById('closeToTrayToggle');
+        const autoUpdateToggle = document.getElementById('autoUpdateToggle');
+
+        if (darkModeToggle) {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            darkModeToggle.checked = currentTheme === 'dark';
         }
 
-        const modal = document.createElement('div');
-        modal.className = 'modal show';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3><i class="fas fa-exclamation-triangle"></i> Download Timeout</h3>
-                    <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <p>The download is taking longer than expected to start.</p>
-                    <p>This might be because:</p>
-                    <ul style="text-align: left; margin: 10px 0;">
-                        <li>No internet connection</li>
-                        <li>GitHub servers are busy</li>
-                        <li>No update available</li>
-                        <li>Firewall blocking the download</li>
-                    </ul>
-                    <p>Please try again later or check your internet connection.</p>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
-                    <button class="btn btn-primary" onclick="taskManager.downloadUpdate(); this.closest('.modal').remove();">Try Again</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-    }
-
-    // New integrated UI methods
-    hideAllUpdateSections() {
-        document.getElementById('updateProgressSection').style.display = 'none';
-        document.getElementById('updateAvailableSection').style.display = 'none';
-        document.getElementById('updateDownloadedSection').style.display = 'none';
-    }
-
-    showUpdateAvailable(info) {
-        this.hideAllUpdateSections();
-        
-        const section = document.getElementById('updateAvailableSection');
-        document.getElementById('availableVersionText').textContent = `v${info.version}`;
-        document.getElementById('updateNotes').textContent = info.releaseNotes || 'New features and improvements';
-        
-        section.style.display = 'block';
-        
-        // Add event listeners for the new buttons
-        document.getElementById('downloadUpdateBtn').onclick = () => {
-            this.downloadUpdate();
-        };
-        
-        document.getElementById('dismissUpdateBtn').onclick = () => {
-            this.hideAllUpdateSections();
-        };
-    }
-
-    showUpdateProgress() {
-        this.hideAllUpdateSections();
-        
-        const section = document.getElementById('updateProgressSection');
-        section.style.display = 'block';
-        
-        // Reset progress
-        document.getElementById('updateProgressFill').style.width = '0%';
-        document.getElementById('updateProgressText').textContent = '0%';
-        document.getElementById('updateSpeed').textContent = 'Preparing download...';
-        document.getElementById('updateSize').textContent = 'Calculating size...';
-        
-        // Add event listener for cancel button
-        document.getElementById('cancelUpdateBtn').onclick = () => {
-            this.hideAllUpdateSections();
-        };
-    }
-
-    updateDownloadProgress(progressObj) {
-        const section = document.getElementById('updateProgressSection');
-        if (section.style.display === 'none') {
-            this.showUpdateProgress();
+        if (minimizeToTrayToggle) {
+            minimizeToTrayToggle.checked = localStorage.getItem('minimizeToTray') === 'true';
         }
-        
-        const percent = Math.round(progressObj.percent);
-        const speed = this.formatBytes(progressObj.bytesPerSecond) + '/s';
-        const transferred = this.formatBytes(progressObj.transferred);
-        const total = this.formatBytes(progressObj.total);
-        
-        document.getElementById('updateProgressFill').style.width = `${percent}%`;
-        document.getElementById('updateProgressText').textContent = `${percent}%`;
-        document.getElementById('updateSpeed').textContent = `Speed: ${speed}`;
-        document.getElementById('updateSize').textContent = `${transferred} / ${total}`;
+
+        if (closeToTrayToggle) {
+            closeToTrayToggle.checked = localStorage.getItem('closeToTray') === 'true';
+        }
+
+        if (autoUpdateToggle) {
+            autoUpdateToggle.checked = localStorage.getItem('autoUpdate') !== 'false'; // Default to true
+        }
     }
 
-    showUpdateDownloaded(info) {
-        this.hideAllUpdateSections();
-        
-        const section = document.getElementById('updateDownloadedSection');
-        document.getElementById('downloadedVersionText').textContent = `v${info.version}`;
-        
-        section.style.display = 'block';
-        
-        // Add event listeners for the new buttons
-        document.getElementById('installUpdateBtn').onclick = () => {
-            this.installUpdate();
-        };
-        
-        document.getElementById('dismissDownloadedBtn').onclick = () => {
-            this.hideAllUpdateSections();
-        };
+    saveSettings() {
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const minimizeToTrayToggle = document.getElementById('minimizeToTrayToggle');
+        const closeToTrayToggle = document.getElementById('closeToTrayToggle');
+        const autoUpdateToggle = document.getElementById('autoUpdateToggle');
+
+        // Save dark mode setting
+        if (darkModeToggle) {
+            const isDarkMode = darkModeToggle.checked;
+            const newTheme = isDarkMode ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // Save tray settings
+        if (minimizeToTrayToggle) {
+            localStorage.setItem('minimizeToTray', minimizeToTrayToggle.checked.toString());
+        }
+
+        if (closeToTrayToggle) {
+            localStorage.setItem('closeToTray', closeToTrayToggle.checked.toString());
+        }
+
+        // Save auto-update setting
+        if (autoUpdateToggle) {
+            localStorage.setItem('autoUpdate', autoUpdateToggle.checked.toString());
+        }
+
+        // Send settings to main process
+        ipcRenderer.invoke('update-settings', {
+            minimizeToTray: minimizeToTrayToggle ? minimizeToTrayToggle.checked : false,
+            closeToTray: closeToTrayToggle ? closeToTrayToggle.checked : false,
+            autoUpdate: autoUpdateToggle ? autoUpdateToggle.checked : true
+        });
+
+        this.hideSettingsModal();
     }
 
-    showUpdateError(error) {
-        // For now, show error in console and hide update sections
-        console.error('Update error:', error);
-        this.hideAllUpdateSections();
-        
-        // You could also show a small notification here
-        alert(`Update Error: ${error}`);
-    }
+    loadSettings() {
+        // Load settings from localStorage
+        const minimizeToTray = localStorage.getItem('minimizeToTray') === 'true';
+        const closeToTray = localStorage.getItem('closeToTray') === 'true';
+        const autoUpdate = localStorage.getItem('autoUpdate') !== 'false'; // Default to true
 
-    formatBytes(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        // Send initial settings to main process
+        ipcRenderer.invoke('update-settings', {
+            minimizeToTray: minimizeToTray,
+            closeToTray: closeToTray,
+            autoUpdate: autoUpdate
+        });
     }
 }
 

@@ -1,12 +1,18 @@
-const { app, BrowserWindow, ipcMain, Notification, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, Notification, dialog, Tray, Menu, shell } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const fs = require('fs');
 const notifier = require('node-notifier');
 
 let mainWindow;
+let tray = null;
 let tasks = [];
 let alarms = new Map();
+let settings = {
+    minimizeToTray: false,
+    closeToTray: false,
+    autoUpdate: true
+};
 const MAX_TIMEOUT_MS = 0x7fffffff; // Maximum setTimeout delay (~24.8 days)
 
 // Configure auto-updater
@@ -31,8 +37,7 @@ if (app.isPackaged || process.env.ENABLE_AUTO_UPDATER === 'true') {
     });
   }
   
-  // Check for updates immediately
-  autoUpdater.checkForUpdatesAndNotify();
+  // Check for updates based on settings (will be called after settings are loaded)
 } else {
   console.log('❌ Auto-updater disabled in development mode');
   console.log('💡 To enable for testing, run: .\test-update-flow.bat');
@@ -149,6 +154,54 @@ function showAlarmNotification(taskId) {
   }
 }
 
+// Create system tray
+function createTray() {
+  const iconPath = path.join(__dirname, 'assets/icon.png');
+  tray = new Tray(iconPath);
+  
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Show Task Reminder',
+      click: () => {
+        if (mainWindow) {
+          mainWindow.show();
+          mainWindow.focus();
+        }
+      }
+    },
+    {
+      label: 'Settings',
+      click: () => {
+        if (mainWindow) {
+          mainWindow.show();
+          mainWindow.focus();
+          mainWindow.webContents.send('open-settings');
+        }
+      }
+    },
+    { type: 'separator' },
+    {
+      label: 'Exit',
+      click: () => {
+        // Force exit regardless of close-to-tray setting
+        settings.closeToTray = false;
+        app.quit();
+      }
+    }
+  ]);
+  
+  tray.setToolTip('Task Reminder');
+  tray.setContextMenu(contextMenu);
+  
+  // Double click to show window
+  tray.on('double-click', () => {
+    if (mainWindow) {
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+}
+
 // Create the main window
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -169,6 +222,20 @@ function createWindow() {
     mainWindow.show();
   });
 
+  mainWindow.on('minimize', (event) => {
+    if (settings.minimizeToTray) {
+      event.preventDefault();
+      mainWindow.hide();
+    }
+  });
+
+  mainWindow.on('close', (event) => {
+    if (settings.closeToTray) {
+      event.preventDefault();
+      mainWindow.hide();
+    }
+  });
+
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
@@ -178,6 +245,12 @@ function createWindow() {
 app.whenReady().then(() => {
   loadTasks();
   createWindow();
+  createTray();
+  
+  // Check for updates after a short delay to allow settings to load
+  setTimeout(() => {
+    checkForUpdatesIfEnabled();
+  }, 2000);
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -225,24 +298,6 @@ autoUpdater.on('error', (err) => {
   }
 });
 
-autoUpdater.on('download-progress', (progressObj) => {
-  console.log('Download progress event received:', progressObj);
-  let log_message = "Download speed: " + progressObj.bytesPerSecond;
-  log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
-  log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
-  console.log(log_message);
-  
-  if (mainWindow) {
-    mainWindow.webContents.send('download-progress', progressObj);
-  }
-});
-
-autoUpdater.on('update-downloaded', (info) => {
-  console.log('Update downloaded successfully:', info);
-  if (mainWindow) {
-    mainWindow.webContents.send('update-downloaded', info);
-  }
-});
 
 // Add timeout for update checks
 let updateTimeout;
@@ -389,11 +444,42 @@ ipcMain.handle('refocus-window', () => {
   return false;
 });
 
+// Function to check for updates based on settings
+function checkForUpdatesIfEnabled() {
+  if (settings.autoUpdate && (app.isPackaged || process.env.ENABLE_AUTO_UPDATER === 'true')) {
+    console.log('🔍 Checking for updates (auto-update enabled)');
+    autoUpdater.checkForUpdatesAndNotify();
+  } else {
+    console.log('⏸️ Auto-update disabled, skipping update check');
+  }
+}
+
+// Settings IPC handlers
+ipcMain.handle('update-settings', (event, newSettings) => {
+  settings = { ...settings, ...newSettings };
+  
+  // If auto-update setting changed, check for updates if enabled
+  if (newSettings.autoUpdate !== undefined) {
+    checkForUpdatesIfEnabled();
+  }
+  
+  return settings;
+});
+
+ipcMain.handle('get-settings', () => {
+  return settings;
+});
+
+// Listen for open-settings event from renderer
+ipcMain.on('open-settings', () => {
+  // This will be handled by the renderer process
+});
+
 // Auto-updater IPC handlers
 ipcMain.handle('check-for-updates', () => {
   console.log('Manual check for updates triggered');
   
-  // In testing mode, simulate update check
+  // Always allow manual checks regardless of auto-update setting
   if (process.env.ENABLE_AUTO_UPDATER === 'true') {
     console.log('🧪 Testing mode: Simulating update check');
     return new Promise((resolve) => {
@@ -420,107 +506,15 @@ ipcMain.handle('check-for-updates', () => {
   return autoUpdater.checkForUpdates();
 });
 
-ipcMain.handle('force-download-update', () => {
+ipcMain.handle('open-download-page', () => {
   try {
-    console.log('Force downloading update...');
-    autoUpdater.downloadUpdate();
-    return { success: true, message: 'Force download started' };
+    console.log('Opening download page in browser...');
+    const downloadUrl = 'https://github.com/AMoussa77/Taskreminder/releases/latest';
+    shell.openExternal(downloadUrl);
+    return { success: true, message: 'Download page opened in browser' };
   } catch (error) {
-    console.error('Error force downloading:', error);
+    console.error('Error opening download page:', error);
     return { success: false, error: error.message };
   }
 });
 
-ipcMain.handle('download-update', () => {
-  try {
-    console.log('Starting manual update download...');
-    console.log('App is packaged:', app.isPackaged);
-    console.log('Auto-updater enabled:', process.env.ENABLE_AUTO_UPDATER);
-    
-    // Check if auto-updater is available
-    if (!app.isPackaged && process.env.ENABLE_AUTO_UPDATER !== 'true') {
-      return { 
-        success: false, 
-        error: 'Auto-updater is disabled in development mode. Please build the app or set ENABLE_AUTO_UPDATER=true' 
-      };
-    }
-    
-    // In testing mode, simulate download process
-    if (process.env.ENABLE_AUTO_UPDATER === 'true' && !app.isPackaged) {
-      console.log('🧪 Testing mode: Simulating download process');
-      simulateDownload();
-      return { success: true, message: 'Simulated download started' };
-    }
-    
-    // For real updates, start download immediately
-    console.log('Starting real update download...');
-    try {
-      autoUpdater.downloadUpdate();
-      
-      // Set a timeout to detect if download doesn't start
-      const downloadTimeout = setTimeout(() => {
-        console.log('Download timeout - no progress detected');
-        if (mainWindow) {
-          mainWindow.webContents.send('download-timeout');
-        }
-      }, 20000); // 20 seconds timeout
-      
-      // Clear timeout when progress starts
-      autoUpdater.once('download-progress', (progressObj) => {
-        clearTimeout(downloadTimeout);
-        console.log('Download progress started:', progressObj);
-      });
-      
-      console.log('Download process initiated');
-      return { success: true, message: 'Download process started' };
-    } catch (error) {
-      console.error('Error starting download:', error);
-      return { success: false, error: error.message };
-    }
-  } catch (error) {
-    console.error('Error starting download:', error);
-    return { success: false, error: error.message };
-  }
-});
-
-ipcMain.handle('quit-and-install', () => {
-  console.log('Installing update and restarting...');
-  autoUpdater.quitAndInstall();
-});
-
-// Simulate download process for testing
-function simulateDownload() {
-  console.log('🎬 Starting simulated download...');
-  
-  let progress = 0;
-  const interval = setInterval(() => {
-    progress += Math.random() * 15; // Random progress increment
-    
-    if (progress >= 100) {
-      progress = 100;
-      clearInterval(interval);
-      
-      // Simulate download complete
-      console.log('✅ Simulated download completed');
-      if (mainWindow) {
-        mainWindow.webContents.send('update-downloaded', {
-          version: '0.0.9',
-          releaseNotes: 'Test update for development'
-        });
-      }
-    } else {
-      // Simulate progress update
-      const progressObj = {
-        percent: progress,
-        bytesPerSecond: 1024 * 1024, // 1 MB/s
-        transferred: progress * 1024 * 1024, // Simulated bytes
-        total: 100 * 1024 * 1024 // 100 MB total
-      };
-      
-      console.log(`📊 Download progress: ${Math.round(progress)}%`);
-      if (mainWindow) {
-        mainWindow.webContents.send('download-progress', progressObj);
-      }
-    }
-  }, 500); // Update every 500ms
-}
