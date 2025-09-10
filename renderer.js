@@ -790,7 +790,13 @@ class TaskManager {
             console.log('Download result:', result);
             
             if (!result.success) {
-                throw new Error(result.error || 'Download failed to start');
+                // Show specific error message for disabled auto-updater
+                if (result.error && result.error.includes('development mode')) {
+                    this.showUpdateErrorModal(result.error);
+                } else {
+                    throw new Error(result.error || 'Download failed to start');
+                }
+                return;
             }
             
             // Set a fallback timeout to show error if no progress after 15 seconds

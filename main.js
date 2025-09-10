@@ -10,13 +10,15 @@ let alarms = new Map();
 const MAX_TIMEOUT_MS = 0x7fffffff; // Maximum setTimeout delay (~24.8 days)
 
 // Configure auto-updater
-// Only enable auto-updater in production (packaged) mode
-if (app.isPackaged) {
+// Enable auto-updater in production (packaged) mode or when forced
+if (app.isPackaged || process.env.ENABLE_AUTO_UPDATER === 'true') {
   autoUpdater.autoDownload = false; // Manual download control
   autoUpdater.autoInstallOnAppQuit = true;
   autoUpdater.checkForUpdatesAndNotify();
+  console.log('Auto-updater enabled');
 } else {
   console.log('Auto-updater disabled in development mode');
+  console.log('To enable for testing, set ENABLE_AUTO_UPDATER=true');
 }
 
 // Load tasks from file
@@ -375,6 +377,16 @@ ipcMain.handle('check-for-updates', () => {
 ipcMain.handle('download-update', () => {
   try {
     console.log('Starting manual update download...');
+    console.log('App is packaged:', app.isPackaged);
+    console.log('Auto-updater enabled:', process.env.ENABLE_AUTO_UPDATER);
+    
+    // Check if auto-updater is available
+    if (!app.isPackaged && process.env.ENABLE_AUTO_UPDATER !== 'true') {
+      return { 
+        success: false, 
+        error: 'Auto-updater is disabled in development mode. Please build the app or set ENABLE_AUTO_UPDATER=true' 
+      };
+    }
     
     // Set a timeout to detect if download doesn't start
     const downloadTimeout = setTimeout(() => {
