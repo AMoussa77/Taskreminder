@@ -39,8 +39,9 @@ if (app.isPackaged || process.env.ENABLE_AUTO_UPDATER === 'true') {
   
   // Check for updates based on settings (will be called after settings are loaded)
 } else {
-  console.log('❌ Auto-updater disabled in development mode');
-  console.log('💡 To enable for testing, run: .\test-update-flow.bat');
+  console.log('🧪 Development mode: Auto-updater disabled for automatic checks');
+  console.log('💡 Manual update checks will work with simulated updates');
+  console.log('💡 To enable real auto-updater, run: .\test-update-flow.bat');
   console.log('💡 Or set ENABLE_AUTO_UPDATER=true');
 }
 
@@ -299,6 +300,7 @@ autoUpdater.on('error', (err) => {
 });
 
 
+
 // Add timeout for update checks
 let updateTimeout;
 autoUpdater.on('checking-for-update', () => {
@@ -454,6 +456,34 @@ function checkForUpdatesIfEnabled() {
   }
 }
 
+// Function to check for updates (always works for manual checks)
+function checkForUpdatesManual() {
+  if (app.isPackaged || process.env.ENABLE_AUTO_UPDATER === 'true') {
+    console.log('🔍 Manual update check triggered');
+    return autoUpdater.checkForUpdates();
+  } else {
+    console.log('🧪 Development mode: Simulating update check');
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        console.log('🔍 Simulated update check completed');
+        // Simulate finding an update
+        const mockUpdateInfo = {
+          version: '0.1.8',
+          releaseNotes: 'Test update for development',
+          releaseDate: new Date().toISOString()
+        };
+        
+        console.log('✅ Simulated update available:', mockUpdateInfo);
+        if (mainWindow) {
+          mainWindow.webContents.send('update-available', mockUpdateInfo);
+        }
+        
+        resolve({ updateInfo: mockUpdateInfo });
+      }, 2000);
+    });
+  }
+}
+
 // Settings IPC handlers
 ipcMain.handle('update-settings', (event, newSettings) => {
   settings = { ...settings, ...newSettings };
@@ -478,33 +508,10 @@ ipcMain.on('open-settings', () => {
 // Auto-updater IPC handlers
 ipcMain.handle('check-for-updates', () => {
   console.log('Manual check for updates triggered');
-  
-  // Always allow manual checks regardless of auto-update setting
-  if (process.env.ENABLE_AUTO_UPDATER === 'true') {
-    console.log('🧪 Testing mode: Simulating update check');
-    return new Promise((resolve) => {
-      // Simulate checking for updates
-      setTimeout(() => {
-        console.log('🔍 Simulated update check completed');
-        // Simulate finding an update
-        const mockUpdateInfo = {
-          version: '0.0.9',
-          releaseNotes: 'Test update for development',
-          releaseDate: new Date().toISOString()
-        };
-        
-        console.log('✅ Simulated update available:', mockUpdateInfo);
-        if (mainWindow) {
-          mainWindow.webContents.send('update-available', mockUpdateInfo);
-        }
-        
-        resolve({ updateInfo: mockUpdateInfo });
-      }, 2000);
-    });
-  }
-  
-  return autoUpdater.checkForUpdates();
+  return checkForUpdatesManual();
 });
+
+
 
 ipcMain.handle('open-download-page', () => {
   try {

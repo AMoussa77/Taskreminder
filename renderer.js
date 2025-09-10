@@ -92,6 +92,7 @@ class TaskManager {
             this.showUpdateAvailableModal(info);
         });
 
+
         // Confirm modal events
         const closeConfirm = document.getElementById('closeConfirmModal');
         const cancelConfirm = document.getElementById('cancelConfirm');
@@ -123,6 +124,23 @@ class TaskManager {
                 this.checkForUpdates();
             });
         }
+
+        // Download update button
+        const downloadUpdateBtn = document.getElementById('downloadUpdateBtn');
+        if (downloadUpdateBtn) {
+            downloadUpdateBtn.addEventListener('click', () => {
+                this.downloadUpdate();
+            });
+        }
+
+        // Dismiss update button
+        const dismissUpdateBtn = document.getElementById('dismissUpdateBtn');
+        if (dismissUpdateBtn) {
+            dismissUpdateBtn.addEventListener('click', () => {
+                this.dismissUpdate();
+            });
+        }
+
 
         // Settings button
         const settingsBtn = document.getElementById('settingsBtn');
@@ -621,36 +639,55 @@ class TaskManager {
 
     // Auto-updater methods
     showUpdateAvailableModal(info) {
-        const modal = document.createElement('div');
-        modal.className = 'modal show';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3><i class="fas fa-download"></i> Update Available</h3>
-                    <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <p>A new version (${info.version}) is available for download.</p>
-                    <p>Would you like to download and install it now?</p>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Later</button>
-                    <button class="btn btn-primary" onclick="taskManager.downloadUpdate()">Download Update</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
+        // Show the integrated update available section
+        const updateSection = document.getElementById('updateAvailableSection');
+        if (updateSection) {
+            updateSection.style.display = 'block';
+            
+            // Update the version text
+            const versionText = document.getElementById('availableVersionText');
+            if (versionText) {
+                versionText.textContent = `v${info.version}`;
+            }
+            
+            // Update the notes if available
+            const notesText = document.getElementById('updateNotes');
+            if (notesText && info.releaseNotes) {
+                notesText.textContent = info.releaseNotes;
+            }
+        }
     }
 
 
     async downloadUpdate() {
         try {
-            // Open the GitHub releases page in the browser
+            console.log('Open download page button clicked');
+            
+            // Hide the update available section
+            const updateSection = document.getElementById('updateAvailableSection');
+            if (updateSection) {
+                updateSection.style.display = 'none';
+            }
+            
+            // Open download page in browser
+            console.log('Opening download page in browser');
             await ipcRenderer.invoke('open-download-page');
         } catch (error) {
             console.error('Error opening download page:', error);
         }
     }
+
+    dismissUpdate() {
+        // Hide the update available section
+        const updateSection = document.getElementById('updateAvailableSection');
+        if (updateSection) {
+            updateSection.style.display = 'none';
+        }
+    }
+
+
+
+
 
 
     async checkForUpdates() {

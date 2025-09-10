@@ -789,10 +789,12 @@ body {
     gap: 8px;
 }
 
+
 /* Update section specific styles */
 .update-available-section {
     border-left: 4px solid var(--warning);
 }
+
 
 /* Dark mode for update sections */
 [data-theme="dark"] .update-available-section {
