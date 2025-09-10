@@ -89,17 +89,12 @@ class TaskManager {
 
         ipcRenderer.on('update-available', (event, info) => {
             console.log('Update available:', info);
-            this.showUpdateAvailableModal(info);
+            this.showUpdateAvailable(info);
         });
 
         ipcRenderer.on('update-not-available', (event, info) => {
             console.log('No updates available:', info);
-            // Close any progress modal if it exists
-            const progressModal = document.getElementById('downloadProgressModal');
-            if (progressModal) {
-                progressModal.remove();
-            }
-            this.showUpdateErrorModal('No updates available. You are already running the latest version.');
+            this.hideAllUpdateSections();
         });
 
         ipcRenderer.on('download-progress', (event, progressObj) => {
@@ -109,7 +104,7 @@ class TaskManager {
 
         ipcRenderer.on('update-downloaded', (event, info) => {
             console.log('Update downloaded:', info);
-            this.showUpdateDownloadedModal(info);
+            this.showUpdateDownloaded(info);
         });
 
         ipcRenderer.on('update-error', (event, error) => {
@@ -782,14 +777,9 @@ class TaskManager {
     async downloadUpdate() {
         try {
             console.log('Starting update download...');
-            // Close the update available modal
-            const modal = document.querySelector('.modal.show');
-            if (modal) {
-                modal.remove();
-            }
             
-            // Show download progress modal
-            this.showDownloadProgressModal();
+            // Show integrated download progress UI
+            this.showUpdateProgress();
             
             // First try the normal download process
             const result = await ipcRenderer.invoke('download-update');
@@ -798,7 +788,7 @@ class TaskManager {
             if (!result.success) {
                 // Show specific error message for disabled auto-updater
                 if (result.error && result.error.includes('development mode')) {
-                    this.showUpdateErrorModal(result.error);
+                    this.showUpdateError(result.error);
                 } else {
                     throw new Error(result.error || 'Download failed to start');
                 }
@@ -807,8 +797,8 @@ class TaskManager {
             
             // Set a fallback timeout to show error if no progress after 15 seconds
             setTimeout(() => {
-                const progressModal = document.getElementById('downloadProgressModal');
-                if (progressModal && progressModal.querySelector('.progress-text').textContent === '0%') {
+                const progressText = document.getElementById('updateProgressText');
+                if (progressText && progressText.textContent === '0%') {
                     console.log('No progress detected, trying force download...');
                     this.forceDownloadUpdate();
                 }
@@ -816,7 +806,7 @@ class TaskManager {
             
         } catch (error) {
             console.error('Error downloading update:', error);
-            this.showUpdateErrorModal('Failed to download update: ' + error.message);
+            this.showUpdateError('Failed to download update: ' + error.message);
         }
     }
 
@@ -938,6 +928,102 @@ class TaskManager {
             </div>
         `;
         document.body.appendChild(modal);
+    }
+
+    // New integrated UI methods
+    hideAllUpdateSections() {
+        document.getElementById('updateProgressSection').style.display = 'none';
+        document.getElementById('updateAvailableSection').style.display = 'none';
+        document.getElementById('updateDownloadedSection').style.display = 'none';
+    }
+
+    showUpdateAvailable(info) {
+        this.hideAllUpdateSections();
+        
+        const section = document.getElementById('updateAvailableSection');
+        document.getElementById('availableVersionText').textContent = `v${info.version}`;
+        document.getElementById('updateNotes').textContent = info.releaseNotes || 'New features and improvements';
+        
+        section.style.display = 'block';
+        
+        // Add event listeners for the new buttons
+        document.getElementById('downloadUpdateBtn').onclick = () => {
+            this.downloadUpdate();
+        };
+        
+        document.getElementById('dismissUpdateBtn').onclick = () => {
+            this.hideAllUpdateSections();
+        };
+    }
+
+    showUpdateProgress() {
+        this.hideAllUpdateSections();
+        
+        const section = document.getElementById('updateProgressSection');
+        section.style.display = 'block';
+        
+        // Reset progress
+        document.getElementById('updateProgressFill').style.width = '0%';
+        document.getElementById('updateProgressText').textContent = '0%';
+        document.getElementById('updateSpeed').textContent = 'Preparing download...';
+        document.getElementById('updateSize').textContent = 'Calculating size...';
+        
+        // Add event listener for cancel button
+        document.getElementById('cancelUpdateBtn').onclick = () => {
+            this.hideAllUpdateSections();
+        };
+    }
+
+    updateDownloadProgress(progressObj) {
+        const section = document.getElementById('updateProgressSection');
+        if (section.style.display === 'none') {
+            this.showUpdateProgress();
+        }
+        
+        const percent = Math.round(progressObj.percent);
+        const speed = this.formatBytes(progressObj.bytesPerSecond) + '/s';
+        const transferred = this.formatBytes(progressObj.transferred);
+        const total = this.formatBytes(progressObj.total);
+        
+        document.getElementById('updateProgressFill').style.width = `${percent}%`;
+        document.getElementById('updateProgressText').textContent = `${percent}%`;
+        document.getElementById('updateSpeed').textContent = `Speed: ${speed}`;
+        document.getElementById('updateSize').textContent = `${transferred} / ${total}`;
+    }
+
+    showUpdateDownloaded(info) {
+        this.hideAllUpdateSections();
+        
+        const section = document.getElementById('updateDownloadedSection');
+        document.getElementById('downloadedVersionText').textContent = `v${info.version}`;
+        
+        section.style.display = 'block';
+        
+        // Add event listeners for the new buttons
+        document.getElementById('installUpdateBtn').onclick = () => {
+            this.installUpdate();
+        };
+        
+        document.getElementById('dismissDownloadedBtn').onclick = () => {
+            this.hideAllUpdateSections();
+        };
+    }
+
+    showUpdateError(error) {
+        // For now, show error in console and hide update sections
+        console.error('Update error:', error);
+        this.hideAllUpdateSections();
+        
+        // You could also show a small notification here
+        alert(`Update Error: ${error}`);
+    }
+
+    formatBytes(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 }
 

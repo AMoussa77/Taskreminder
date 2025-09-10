@@ -16,7 +16,7 @@
                         <div class="logo-container">
                             <img src="assets/icon.svg" alt="Task Reminder Logo" class="app-logo">
                             <h1>Task Reminder</h1>
-                            <span class="version-badge">v0.1.0</span>
+                            <span class="version-badge">v0.1.1</span>
                         </div>
                         <p>Manage your tasks with custom alarms</p>
                     </div>
@@ -30,6 +30,83 @@
                 </div>
             </div>
         </header>
+
+        <!-- Update Progress Section (integrated into main UI) -->
+        <div id="updateProgressSection" class="update-progress-section" style="display: none;">
+            <div class="update-status">
+                <div class="update-icon">
+                    <i class="fas fa-download"></i>
+                </div>
+                <div class="update-info">
+                    <div class="update-title">Downloading Update</div>
+                    <div class="update-version" id="updateVersionText">v0.1.0</div>
+                </div>
+                <div class="update-actions">
+                    <button id="cancelUpdateBtn" class="btn btn-danger btn-sm">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </button>
+                </div>
+            </div>
+            <div class="update-progress-bar">
+                <div class="progress-bar" id="updateProgressBar">
+                    <div class="progress-fill" id="updateProgressFill"></div>
+                </div>
+                <div class="progress-text" id="updateProgressText">0%</div>
+            </div>
+            <div class="update-details" id="updateDetails">
+                <div class="update-speed" id="updateSpeed">Preparing download...</div>
+                <div class="update-size" id="updateSize">Calculating size...</div>
+            </div>
+        </div>
+        
+        <!-- Update Available Section (integrated into main UI) -->
+        <div id="updateAvailableSection" class="update-available-section" style="display: none;">
+            <div class="update-notification">
+                <div class="update-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="update-info">
+                    <div class="update-title">Update Available</div>
+                    <div class="update-version" id="availableVersionText">v0.1.0</div>
+                    <div class="update-notes" id="updateNotes">New features and improvements</div>
+                </div>
+                <div class="update-actions">
+                    <button id="downloadUpdateBtn" class="btn btn-primary">
+                        <i class="fas fa-download"></i>
+                        Download Update
+                    </button>
+                    <button id="dismissUpdateBtn" class="btn btn-secondary">
+                        <i class="fas fa-times"></i>
+                        Dismiss
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Update Downloaded Section (integrated into main UI) -->
+        <div id="updateDownloadedSection" class="update-downloaded-section" style="display: none;">
+            <div class="update-notification">
+                <div class="update-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="update-info">
+                    <div class="update-title">Update Downloaded</div>
+                    <div class="update-version" id="downloadedVersionText">v0.1.0</div>
+                    <div class="update-notes">Ready to install and restart</div>
+                </div>
+                <div class="update-actions">
+                    <button id="installUpdateBtn" class="btn btn-success">
+                        <i class="fas fa-play"></i>
+                        Install & Restart
+                    </button>
+                    <button id="dismissDownloadedBtn" class="btn btn-secondary">
+                        <i class="fas fa-times"></i>
+                        Later
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <div class="add-task-section">
             <div class="add-task-form">
