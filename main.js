@@ -14,11 +14,29 @@ const MAX_TIMEOUT_MS = 0x7fffffff; // Maximum setTimeout delay (~24.8 days)
 if (app.isPackaged || process.env.ENABLE_AUTO_UPDATER === 'true') {
   autoUpdater.autoDownload = false; // Manual download control
   autoUpdater.autoInstallOnAppQuit = true;
+  
+  console.log('🚀 Auto-updater enabled');
+  console.log('📦 App is packaged:', app.isPackaged);
+  console.log('🔧 Environment:', process.env.ENABLE_AUTO_UPDATER);
+  console.log('📋 Current version:', app.getVersion());
+  
+  // Force enable auto-updater for testing
+  if (process.env.ENABLE_AUTO_UPDATER === 'true') {
+    console.log('🧪 Testing mode: Forcing auto-updater to work');
+    // Set the feed URL to force update checking
+    autoUpdater.setFeedURL({
+      provider: 'github',
+      owner: 'AMoussa77',
+      repo: 'Taskreminder'
+    });
+  }
+  
+  // Check for updates immediately
   autoUpdater.checkForUpdatesAndNotify();
-  console.log('Auto-updater enabled');
 } else {
-  console.log('Auto-updater disabled in development mode');
-  console.log('To enable for testing, set ENABLE_AUTO_UPDATER=true');
+  console.log('❌ Auto-updater disabled in development mode');
+  console.log('💡 To enable for testing, run: .\test-update-flow.bat');
+  console.log('💡 Or set ENABLE_AUTO_UPDATER=true');
 }
 
 // Load tasks from file
@@ -176,23 +194,25 @@ app.on('window-all-closed', () => {
 
 // Auto-updater event handlers
 autoUpdater.on('checking-for-update', () => {
-  console.log('Checking for update...');
+  console.log('🔍 Checking for updates...');
   if (mainWindow) {
     mainWindow.webContents.send('update-checking');
   }
 });
 
 autoUpdater.on('update-available', (info) => {
-  console.log('Update available:', info);
-  console.log('Version:', info.version);
-  console.log('Release notes:', info.releaseNotes);
+  console.log('✅ Update available!');
+  console.log('📋 Version:', info.version);
+  console.log('📝 Release notes:', info.releaseNotes);
+  console.log('📦 Release date:', info.releaseDate);
   if (mainWindow) {
     mainWindow.webContents.send('update-available', info);
   }
 });
 
 autoUpdater.on('update-not-available', (info) => {
-  console.log('Update not available:', info);
+  console.log('ℹ️ No updates available');
+  console.log('📋 Info:', info);
   if (mainWindow) {
     mainWindow.webContents.send('update-not-available', info);
   }
@@ -372,6 +392,31 @@ ipcMain.handle('refocus-window', () => {
 // Auto-updater IPC handlers
 ipcMain.handle('check-for-updates', () => {
   console.log('Manual check for updates triggered');
+  
+  // In testing mode, simulate update check
+  if (process.env.ENABLE_AUTO_UPDATER === 'true') {
+    console.log('🧪 Testing mode: Simulating update check');
+    return new Promise((resolve) => {
+      // Simulate checking for updates
+      setTimeout(() => {
+        console.log('🔍 Simulated update check completed');
+        // Simulate finding an update
+        const mockUpdateInfo = {
+          version: '0.0.9',
+          releaseNotes: 'Test update for development',
+          releaseDate: new Date().toISOString()
+        };
+        
+        console.log('✅ Simulated update available:', mockUpdateInfo);
+        if (mainWindow) {
+          mainWindow.webContents.send('update-available', mockUpdateInfo);
+        }
+        
+        resolve({ updateInfo: mockUpdateInfo });
+      }, 2000);
+    });
+  }
+  
   return autoUpdater.checkForUpdates();
 });
 
@@ -398,6 +443,13 @@ ipcMain.handle('download-update', () => {
         success: false, 
         error: 'Auto-updater is disabled in development mode. Please build the app or set ENABLE_AUTO_UPDATER=true' 
       };
+    }
+    
+    // In testing mode, simulate download process
+    if (process.env.ENABLE_AUTO_UPDATER === 'true' && !app.isPackaged) {
+      console.log('🧪 Testing mode: Simulating download process');
+      simulateDownload();
+      return { success: true, message: 'Simulated download started' };
     }
     
     // Check if there's an update available first
@@ -450,3 +502,40 @@ ipcMain.handle('quit-and-install', () => {
   console.log('Installing update and restarting...');
   autoUpdater.quitAndInstall();
 });
+
+// Simulate download process for testing
+function simulateDownload() {
+  console.log('🎬 Starting simulated download...');
+  
+  let progress = 0;
+  const interval = setInterval(() => {
+    progress += Math.random() * 15; // Random progress increment
+    
+    if (progress >= 100) {
+      progress = 100;
+      clearInterval(interval);
+      
+      // Simulate download complete
+      console.log('✅ Simulated download completed');
+      if (mainWindow) {
+        mainWindow.webContents.send('update-downloaded', {
+          version: '0.0.9',
+          releaseNotes: 'Test update for development'
+        });
+      }
+    } else {
+      // Simulate progress update
+      const progressObj = {
+        percent: progress,
+        bytesPerSecond: 1024 * 1024, // 1 MB/s
+        transferred: progress * 1024 * 1024, // Simulated bytes
+        total: 100 * 1024 * 1024 // 100 MB total
+      };
+      
+      console.log(`📊 Download progress: ${Math.round(progress)}%`);
+      if (mainWindow) {
+        mainWindow.webContents.send('download-progress', progressObj);
+      }
+    }
+  }, 500); // Update every 500ms
+}
