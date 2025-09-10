@@ -16,20 +16,20 @@
 }
 
 [data-theme="dark"] {
-    --bg-primary: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-    --bg-secondary: #2c3e50;
-    --bg-tertiary: #34495e;
-    --text-primary: #ecf0f1;
-    --text-secondary: #bdc3c7;
-    --text-muted: #95a5a6;
-    --border-color: #34495e;
-    --shadow: rgba(0,0,0,0.3);
-    --accent: #3498db;
-    --accent-hover: #2980b9;
-    --success: #27ae60;
-    --danger: #e74c3c;
-    --warning: #f39c12;
-    --info: #1abc9c;
+    --bg-primary: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    --bg-secondary: #2d2d2d;
+    --bg-tertiary: #3a3a3a;
+    --text-primary: #ffffff;
+    --text-secondary: #e0e0e0;
+    --text-muted: #b0b0b0;
+    --border-color: #4a4a4a;
+    --shadow: rgba(0,0,0,0.5);
+    --accent: #4a9eff;
+    --accent-hover: #3d8bff;
+    --success: #4caf50;
+    --danger: #f44336;
+    --warning: #ff9800;
+    --info: #00bcd4;
 }
 
 * {
@@ -234,7 +234,7 @@ body {
 
 .alarm-mode {
     margin-bottom: 10px;
-    color: #333;
+    color: var(--text-primary);
 }
 
 .datetime-inputs {
@@ -261,7 +261,7 @@ body {
 .time-input-group label {
     font-size: 0.9rem;
     font-weight: 600;
-    color: #666;
+    color: var(--text-secondary);
 }
 
 .time-input-group input {
@@ -276,7 +276,7 @@ body {
 
 .time-input-group input:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: var(--accent);
 }
 
 .btn {
@@ -401,6 +401,29 @@ body {
     color: #adb5bd;
 }
 
+/* Dark mode styles for completed and expired tasks */
+[data-theme="dark"] .task-item.completed {
+    background: #1e3a1e;
+    border-color: #2d5a2d;
+}
+
+[data-theme="dark"] .task-item.completed .task-title {
+    color: #a0a0a0;
+}
+
+[data-theme="dark"] .task-item.expired {
+    background: #3a3a3a;
+    border-color: #4a4a4a;
+}
+
+[data-theme="dark"] .task-item.expired .task-title {
+    color: #a0a0a0;
+}
+
+[data-theme="dark"] .task-item.expired .task-description {
+    color: #808080;
+}
+
 .task-header {
     display: flex;
     justify-content: space-between;
@@ -457,6 +480,11 @@ body {
     font-weight: 500;
 }
 
+/* Dark mode alarm info */
+[data-theme="dark"] .alarm-info {
+    color: #ffb74d;
+}
+
 .alarm-time {
     font-family: 'Courier New', monospace;
     background: #fff;
@@ -496,6 +524,23 @@ body {
     color: #d32f2f;
 }
 
+/* Dark mode countdown colors */
+[data-theme="dark"] .countdown-time {
+    color: #4a9eff;
+}
+
+[data-theme="dark"] .countdown-time.expired {
+    color: #ff6b6b;
+}
+
+[data-theme="dark"] .countdown-label {
+    color: #4a9eff;
+}
+
+[data-theme="dark"] .countdown-label.expired {
+    color: #ff6b6b;
+}
+
 .modal {
     display: none;
     position: fixed;
@@ -524,6 +569,13 @@ body {
     animation: slideIn 0.3s ease;
 }
 
+/* Dark mode modal styles */
+[data-theme="dark"] .modal-content {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+}
+
 .modal-header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
@@ -532,6 +584,12 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+/* Dark mode modal header */
+[data-theme="dark"] .modal-header {
+    background: linear-gradient(135deg, var(--accent) 0%, #5a67d8 100%);
+    color: white;
 }
 
 .modal-header h3 {
@@ -559,6 +617,15 @@ body {
     background-color: rgba(255,255,255,0.2);
 }
 
+/* Dark mode close button */
+[data-theme="dark"] .close-btn {
+    color: white;
+}
+
+[data-theme="dark"] .close-btn:hover {
+    background-color: rgba(255,255,255,0.2);
+}
+
 .modal-body {
     padding: 20px;
     text-align: center;
@@ -568,6 +635,15 @@ body {
     padding: 20px;
     text-align: center;
     border-top: 1px solid #e1e5e9;
+}
+
+/* Dark mode modal body and footer */
+[data-theme="dark"] .modal-body {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .modal-footer {
+    border-top: 1px solid var(--border-color);
 }
 
 .modal-footer .btn + .btn {
@@ -607,6 +683,19 @@ body {
     color: #999;
 }
 
+/* Dark mode empty state */
+[data-theme="dark"] .empty-state {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .empty-state i {
+    color: var(--text-muted);
+}
+
+[data-theme="dark"] .empty-state h3 {
+    color: var(--text-muted);
+}
+
 .app-footer {
     position: fixed;
     left: 0;
@@ -637,6 +726,24 @@ body {
     text-decoration: none;
     font-weight: 500;
     font-size: 12px;
+}
+
+/* Dark mode footer */
+[data-theme="dark"] .app-footer {
+    background: rgba(45, 45, 45, 0.9);
+    border-top: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] .footer-content {
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .credit-link {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .credit-link:hover {
+    color: var(--accent);
 }
 
 .credit-link:hover {
@@ -732,6 +839,19 @@ body {
     margin-top: 8px;
     font-size: 0.9rem;
     color: var(--text-secondary);
+}
+
+/* Additional dark mode modal text styles */
+[data-theme="dark"] .modal-body p {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .modal-body ul {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .modal-body li {
+    color: var(--text-primary);
 }
 
 .download-speed,
