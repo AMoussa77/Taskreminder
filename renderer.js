@@ -94,6 +94,12 @@ class TaskManager {
 
         ipcRenderer.on('update-not-available', (event, info) => {
             console.log('No updates available:', info);
+            // Close any progress modal if it exists
+            const progressModal = document.getElementById('downloadProgressModal');
+            if (progressModal) {
+                progressModal.remove();
+            }
+            this.showUpdateErrorModal('No updates available. You are already running the latest version.');
         });
 
         ipcRenderer.on('download-progress', (event, progressObj) => {
@@ -785,7 +791,7 @@ class TaskManager {
             // Show download progress modal
             this.showDownloadProgressModal();
             
-            // Trigger the actual download
+            // First try the normal download process
             const result = await ipcRenderer.invoke('download-update');
             console.log('Download result:', result);
             
@@ -803,14 +809,29 @@ class TaskManager {
             setTimeout(() => {
                 const progressModal = document.getElementById('downloadProgressModal');
                 if (progressModal && progressModal.querySelector('.progress-text').textContent === '0%') {
-                    console.log('No progress detected, showing timeout modal');
-                    this.showDownloadTimeoutModal();
+                    console.log('No progress detected, trying force download...');
+                    this.forceDownloadUpdate();
                 }
             }, 15000);
             
         } catch (error) {
             console.error('Error downloading update:', error);
             this.showUpdateErrorModal('Failed to download update: ' + error.message);
+        }
+    }
+
+    async forceDownloadUpdate() {
+        try {
+            console.log('Force downloading update...');
+            const result = await ipcRenderer.invoke('force-download-update');
+            console.log('Force download result:', result);
+            
+            if (!result.success) {
+                this.showDownloadTimeoutModal();
+            }
+        } catch (error) {
+            console.error('Error force downloading:', error);
+            this.showDownloadTimeoutModal();
         }
     }
 

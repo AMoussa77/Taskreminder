@@ -371,7 +371,19 @@ ipcMain.handle('refocus-window', () => {
 
 // Auto-updater IPC handlers
 ipcMain.handle('check-for-updates', () => {
+  console.log('Manual check for updates triggered');
   return autoUpdater.checkForUpdates();
+});
+
+ipcMain.handle('force-download-update', () => {
+  try {
+    console.log('Force downloading update...');
+    autoUpdater.downloadUpdate();
+    return { success: true, message: 'Force download started' };
+  } catch (error) {
+    console.error('Error force downloading:', error);
+    return { success: false, error: error.message };
+  }
 });
 
 ipcMain.handle('download-update', () => {
@@ -388,27 +400,46 @@ ipcMain.handle('download-update', () => {
       };
     }
     
+    // Check if there's an update available first
+    autoUpdater.checkForUpdates().then((updateInfo) => {
+      console.log('Update check result:', updateInfo);
+      if (updateInfo && updateInfo.updateInfo) {
+        console.log('Update available, starting download...');
+        autoUpdater.downloadUpdate();
+      } else {
+        console.log('No update available');
+        if (mainWindow) {
+          mainWindow.webContents.send('update-not-available', { message: 'No update available' });
+        }
+      }
+    }).catch((error) => {
+      console.error('Error checking for updates:', error);
+      if (mainWindow) {
+        mainWindow.webContents.send('update-error', error.message);
+      }
+    });
+    
     // Set a timeout to detect if download doesn't start
     const downloadTimeout = setTimeout(() => {
       console.log('Download timeout - no progress detected');
       if (mainWindow) {
         mainWindow.webContents.send('download-timeout');
       }
-    }, 10000); // 10 seconds timeout
+    }, 15000); // 15 seconds timeout
     
     // Clear timeout when progress starts
     const originalProgressHandler = autoUpdater.listeners('download-progress')[0];
     autoUpdater.removeAllListeners('download-progress');
     autoUpdater.on('download-progress', (progressObj) => {
       clearTimeout(downloadTimeout);
+      console.log('Download progress:', progressObj);
       if (originalProgressHandler) {
         originalProgressHandler(progressObj);
       }
     });
     
-    autoUpdater.downloadUpdate();
-    console.log('Download initiated');
-    return { success: true, message: 'Download started' };
+    console.log('Download process initiated');
+    return { success: true, message: 'Download process started' };
   } catch (error) {
     console.error('Error starting download:', error);
     return { success: false, error: error.message };
