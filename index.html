@@ -143,6 +143,22 @@
             </div>
         </div>
 
+        <!-- Title Required Modal -->
+        <div id="titleRequiredModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Title Required</h3>
+                    <button class="close-btn" id="closeTitleRequiredModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>Please enter a task title before adding the task.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" id="dismissTitleRequired">OK</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Confirm Modal -->
         <div id="confirmModal" class="modal">
             <div class="modal-content">
@@ -180,6 +196,16 @@
                             </label>
                             <p class="setting-description">Enable dark mode for better viewing in low light</p>
                         </div>
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <span>View Mode</span>
+                                <select id="viewModeSelect" class="view-mode-select">
+                                    <option value="normal">Normal</option>
+                                    <option value="mini">Mini Mode</option>
+                                </select>
+                            </label>
+                            <p class="setting-description">Choose between normal view or compact mini mode with smaller interface elements</p>
+                        </div>
                     </div>
                     
                     <div class="settings-section">
@@ -203,6 +229,68 @@
                                 </div>
                             </label>
                             <p class="setting-description">When enabled, closing the window will minimize to tray instead of exiting the app</p>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h4><i class="fas fa-bell"></i> Sound & Notifications</h4>
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <span>Enable Alarm Sound</span>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="soundEnabledToggle" class="toggle-input">
+                                    <span class="toggle-slider"></span>
+                                </div>
+                            </label>
+                            <p class="setting-description">Play a sound when task alarms trigger</p>
+                        </div>
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <span>Sound Volume</span>
+                                <input type="range" id="soundVolumeSlider" class="volume-slider" min="0" max="1" step="0.1" value="0.7">
+                            </label>
+                            <p class="setting-description">Adjust the volume of alarm sounds (0 = silent, 1 = maximum)</p>
+                        </div>
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <span>Alarm Sound</span>
+                                <select id="basicSoundSelect" class="sound-select">
+                                    <option value="default">Default System Sound</option>
+                                    <option value="sinking-island">Sinking Island</option>
+                                    <option value="custom">Custom File...</option>
+                                </select>
+                            </label>
+                            <p class="setting-description">Choose from built-in sounds or select a custom audio file</p>
+                            <div style="margin-top: 10px;">
+                                <button type="button" id="testSoundBtn" class="btn btn-secondary btn-small">
+                                    <i class="fas fa-play"></i> Test Current Sound
+                                </button>
+                                <button type="button" id="stopAudioBtn" class="btn btn-danger btn-small" style="display: none; margin-left: 10px;">
+                                    <i class="fas fa-stop"></i> Stop Audio
+                                </button>
+                            </div>
+                        </div>
+                        <div class="setting-item" id="customSoundSection" style="display: none;">
+                            <label class="setting-label">
+                                <span>Custom Alarm Sound</span>
+                                <div class="sound-file-picker">
+                                    <input type="file" id="soundFileInput" accept="audio/*" style="display: none;">
+                                    <button type="button" id="selectSoundBtn" class="btn btn-secondary btn-small">
+                                        <i class="fas fa-music"></i> Choose File
+                                    </button>
+                                    <button type="button" id="previewSoundBtn" class="btn btn-secondary btn-small" disabled>
+                                        <i class="fas fa-play"></i> Preview
+                                    </button>
+                                    <button type="button" id="resetSoundBtn" class="btn btn-danger btn-small">
+                                        <i class="fas fa-undo"></i> Reset
+                                    </button>
+                                </div>
+                            </label>
+                            <p class="setting-description">Select a custom audio file for alarm sounds (MP3, WAV, OGG supported)</p>
+                            <div id="selectedSoundInfo" class="sound-info" style="display: none;">
+                                <span class="sound-filename"></span>
+                                <span class="sound-duration"></span>
+                            </div>
                         </div>
                     </div>
                     

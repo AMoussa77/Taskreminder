@@ -77,6 +77,15 @@ class TaskManager {
             this.closeAlarmModal();
         });
 
+        // Title Required modal
+        document.getElementById('closeTitleRequiredModal').addEventListener('click', () => {
+            this.closeTitleRequiredModal();
+        });
+
+        document.getElementById('dismissTitleRequired').addEventListener('click', () => {
+            this.closeTitleRequiredModal();
+        });
+
         // Listen for alarm notifications from main process
         ipcRenderer.on('alarm-triggered', (event, data) => {
             this.showAlarmModal(data);
@@ -162,6 +171,12 @@ class TaskManager {
         // Load saved theme and settings
         this.loadTheme();
         this.loadSettings();
+        
+        // Setup sound file picker event listeners
+        this.setupSoundFilePicker();
+        
+        // Setup basic sound selection
+        this.setupBasicSoundSelection();
     }
 
     async loadTasks() {
@@ -199,9 +214,7 @@ class TaskManager {
         }
 
         if (!title) {
-            alert('Please enter a task title');
-            await ipcRenderer.invoke('refocus-window');
-            this.refocusInputs();
+            this.showTitleRequiredModal();
             return;
         }
 
@@ -298,7 +311,6 @@ class TaskManager {
     async deleteTask(taskId) {
         const confirmed = await this.showConfirmModal('Are you sure you want to delete this task?');
         if (!confirmed) {
-            this.refocusInputs();
             return;
         }
         try {
@@ -307,12 +319,10 @@ class TaskManager {
                 this.tasks = this.tasks.filter(t => t.id !== taskId);
                 this.renderTasks();
                 this.updateStats();
-                this.refocusInputs();
             }
         } catch (error) {
             console.error('Error deleting task:', error);
             alert('Error deleting task. Please try again.');
-            this.refocusInputs();
         }
     }
 
@@ -452,15 +462,39 @@ class TaskManager {
         message.textContent = `Time's up for: ${data.title}`;
         modal.classList.add('show');
         
-        // Auto-close after 10 seconds
-        setTimeout(() => {
-            this.closeAlarmModal();
-        }, 10000);
+        // Bring window to front and focus
+        if (window.electronAPI) {
+            window.electronAPI.bringToFront();
+        }
+        
+        // No auto-close - user must manually dismiss
     }
 
     closeAlarmModal() {
         const modal = document.getElementById('alarmModal');
         modal.classList.remove('show');
+        
+        // Stop any playing audio when alarm modal is closed
+        this.stopCurrentAudio();
+    }
+
+    showTitleRequiredModal() {
+        const modal = document.getElementById('titleRequiredModal');
+        modal.classList.add('show');
+        
+        // Focus the modal
+        const okBtn = document.getElementById('dismissTitleRequired');
+        if (okBtn) {
+            setTimeout(() => okBtn.focus(), 100);
+        }
+    }
+
+    closeTitleRequiredModal() {
+        const modal = document.getElementById('titleRequiredModal');
+        modal.classList.remove('show');
+        
+        // Focus back to title input
+        this.refocusInputs();
     }
 
     ensureDateTimeDefaults() {
@@ -528,15 +562,8 @@ class TaskManager {
         for (const task of this.tasks) {
             if (task.completed) continue; // skip completed tasks
             if (task.alarm && task.alarm.enabled) {
-                // If alarm is enabled but no start time, try to get countdown info
-                if (!task.alarmStartTime) {
-                    const countdownInfo = await ipcRenderer.invoke('get-countdown-info', task.id);
-                    if (countdownInfo) {
-                        await this.updateTaskCountdown(task.id);
-                    }
-                } else {
-                    await this.updateTaskCountdown(task.id);
-                }
+                // Always update countdown for tasks with alarms (including expired ones)
+                await this.updateTaskCountdown(task.id);
             } else {
                 // Hide countdown if alarm disabled
                 const taskElement = document.querySelector(`[data-task-id="${task.id}"]`);
@@ -560,6 +587,21 @@ class TaskManager {
             }
         } catch (error) {
             console.error('Error updating countdown:', error);
+        }
+    }
+
+    markTaskAsExpired(taskId) {
+        const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
+        if (taskElement) {
+            // Add expired visual indicator
+            taskElement.classList.add('expired');
+            
+            // Keep countdown display but mark as expired
+            const countdownDisplay = taskElement.querySelector('.countdown-display');
+            if (countdownDisplay) {
+                countdownDisplay.classList.add('expired');
+                countdownDisplay.style.color = '#ff6b6b';
+            }
         }
     }
 
@@ -720,6 +762,10 @@ class TaskManager {
         const minimizeToTrayToggle = document.getElementById('minimizeToTrayToggle');
         const closeToTrayToggle = document.getElementById('closeToTrayToggle');
         const autoUpdateToggle = document.getElementById('autoUpdateToggle');
+        const viewModeSelect = document.getElementById('viewModeSelect');
+        const soundEnabledToggle = document.getElementById('soundEnabledToggle');
+        const soundVolumeSlider = document.getElementById('soundVolumeSlider');
+        const basicSoundSelect = document.getElementById('basicSoundSelect');
 
         if (darkModeToggle) {
             const currentTheme = document.documentElement.getAttribute('data-theme');
@@ -737,6 +783,27 @@ class TaskManager {
         if (autoUpdateToggle) {
             autoUpdateToggle.checked = localStorage.getItem('autoUpdate') !== 'false'; // Default to true
         }
+
+        if (viewModeSelect) {
+            const currentViewMode = localStorage.getItem('viewMode') || 'normal';
+            viewModeSelect.value = currentViewMode;
+        }
+
+        if (soundEnabledToggle) {
+            soundEnabledToggle.checked = localStorage.getItem('soundEnabled') !== 'false'; // Default to true
+        }
+
+        if (soundVolumeSlider) {
+            soundVolumeSlider.value = localStorage.getItem('soundVolume') || '0.7';
+        }
+        
+        if (basicSoundSelect) {
+            basicSoundSelect.value = localStorage.getItem('soundType') || 'default';
+            this.updateCustomSoundSection();
+        }
+        
+        // Load custom sound file info
+        this.loadCustomSoundInfo();
     }
 
     saveSettings() {
@@ -744,6 +811,10 @@ class TaskManager {
         const minimizeToTrayToggle = document.getElementById('minimizeToTrayToggle');
         const closeToTrayToggle = document.getElementById('closeToTrayToggle');
         const autoUpdateToggle = document.getElementById('autoUpdateToggle');
+        const viewModeSelect = document.getElementById('viewModeSelect');
+        const soundEnabledToggle = document.getElementById('soundEnabledToggle');
+        const soundVolumeSlider = document.getElementById('soundVolumeSlider');
+        const basicSoundSelect = document.getElementById('basicSoundSelect');
 
         // Save dark mode setting
         if (darkModeToggle) {
@@ -751,6 +822,26 @@ class TaskManager {
             const newTheme = isDarkMode ? 'dark' : 'light';
             document.documentElement.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
+        }
+
+        // Save view mode setting
+        if (viewModeSelect) {
+            const viewMode = viewModeSelect.value;
+            document.documentElement.setAttribute('data-view-mode', viewMode);
+            localStorage.setItem('viewMode', viewMode);
+        }
+
+        // Save sound settings
+        if (soundEnabledToggle) {
+            localStorage.setItem('soundEnabled', soundEnabledToggle.checked.toString());
+        }
+
+        if (soundVolumeSlider) {
+            localStorage.setItem('soundVolume', soundVolumeSlider.value);
+        }
+        
+        if (basicSoundSelect) {
+            localStorage.setItem('soundType', basicSoundSelect.value);
         }
 
         // Save tray settings
@@ -771,8 +862,16 @@ class TaskManager {
         ipcRenderer.invoke('update-settings', {
             minimizeToTray: minimizeToTrayToggle ? minimizeToTrayToggle.checked : false,
             closeToTray: closeToTrayToggle ? closeToTrayToggle.checked : false,
-            autoUpdate: autoUpdateToggle ? autoUpdateToggle.checked : true
+            autoUpdate: autoUpdateToggle ? autoUpdateToggle.checked : true,
+            viewMode: viewModeSelect ? viewModeSelect.value : 'normal',
+            soundEnabled: soundEnabledToggle ? soundEnabledToggle.checked : true,
+            soundVolume: soundVolumeSlider ? parseFloat(soundVolumeSlider.value) : 0.7,
+            soundType: basicSoundSelect ? basicSoundSelect.value : 'default',
+            customSoundFile: localStorage.getItem('customSoundFile') || null
         });
+
+        // Stop any playing audio when settings are saved
+        this.stopCurrentAudio();
 
         this.hideSettingsModal();
     }
@@ -782,13 +881,293 @@ class TaskManager {
         const minimizeToTray = localStorage.getItem('minimizeToTray') === 'true';
         const closeToTray = localStorage.getItem('closeToTray') === 'true';
         const autoUpdate = localStorage.getItem('autoUpdate') !== 'false'; // Default to true
+        const viewMode = localStorage.getItem('viewMode') || 'normal';
+        const soundEnabled = localStorage.getItem('soundEnabled') !== 'false'; // Default to true
+        const soundVolume = parseFloat(localStorage.getItem('soundVolume')) || 0.7;
+        const soundType = localStorage.getItem('soundType') || 'default';
+
+        // Apply view mode setting
+        document.documentElement.setAttribute('data-view-mode', viewMode);
 
         // Send initial settings to main process
         ipcRenderer.invoke('update-settings', {
             minimizeToTray: minimizeToTray,
             closeToTray: closeToTray,
-            autoUpdate: autoUpdate
+            autoUpdate: autoUpdate,
+            viewMode: viewMode,
+            soundEnabled: soundEnabled,
+            soundVolume: soundVolume,
+            soundType: soundType,
+            customSoundFile: localStorage.getItem('customSoundFile') || null
         });
+    }
+    
+    setupSoundFilePicker() {
+        const selectSoundBtn = document.getElementById('selectSoundBtn');
+        const previewSoundBtn = document.getElementById('previewSoundBtn');
+        const resetSoundBtn = document.getElementById('resetSoundBtn');
+        
+        if (selectSoundBtn) {
+            selectSoundBtn.addEventListener('click', async () => {
+                try {
+                    const result = await ipcRenderer.invoke('select-sound-file');
+                    if (result.success) {
+                        localStorage.setItem('customSoundFile', result.filePath);
+                        this.loadCustomSoundInfo();
+                        this.updateSoundButtons();
+                    } else {
+                        console.error('Failed to select sound file:', result.error);
+                    }
+                } catch (error) {
+                    console.error('Error selecting sound file:', error);
+                }
+            });
+        }
+        
+        if (previewSoundBtn) {
+            previewSoundBtn.addEventListener('click', async () => {
+                try {
+                    const result = await ipcRenderer.invoke('preview-sound-file');
+                    if (!result.success) {
+                        console.error('Failed to preview sound:', result.error);
+                    }
+                } catch (error) {
+                    console.error('Error previewing sound:', error);
+                }
+            });
+        }
+        
+        if (resetSoundBtn) {
+            resetSoundBtn.addEventListener('click', async () => {
+                try {
+                    const result = await ipcRenderer.invoke('reset-sound-file');
+                    if (result.success) {
+                        // Stop current audio
+                        this.stopCurrentAudio();
+                        
+                        // Switch to first sound option (default)
+                        const basicSoundSelect = document.getElementById('basicSoundSelect');
+                        if (basicSoundSelect) {
+                            basicSoundSelect.value = 'default';
+                        }
+                        
+                        localStorage.removeItem('customSoundFile');
+                        this.loadCustomSoundInfo();
+                        this.updateCustomSoundSection();
+                        this.updateSoundButtons();
+                    }
+                } catch (error) {
+                    console.error('Error resetting sound file:', error);
+                }
+            });
+        }
+    }
+    
+    loadCustomSoundInfo() {
+        const customSoundFile = localStorage.getItem('customSoundFile');
+        const soundInfo = document.getElementById('selectedSoundInfo');
+        const soundFilename = document.querySelector('.sound-filename');
+        const soundDuration = document.querySelector('.sound-duration');
+        
+        if (customSoundFile && soundInfo && soundFilename && soundDuration) {
+            const fileName = customSoundFile.split('\\').pop().split('/').pop();
+            soundFilename.textContent = fileName;
+            soundDuration.textContent = 'Custom Sound';
+            soundInfo.style.display = 'flex';
+        } else if (soundInfo) {
+            soundInfo.style.display = 'none';
+        }
+        
+        this.updateSoundButtons();
+    }
+    
+    updateSoundButtons() {
+        const customSoundFile = localStorage.getItem('customSoundFile');
+        const previewSoundBtn = document.getElementById('previewSoundBtn');
+        
+        if (previewSoundBtn) {
+            previewSoundBtn.disabled = !customSoundFile;
+        }
+    }
+    
+    setupBasicSoundSelection() {
+        const basicSoundSelect = document.getElementById('basicSoundSelect');
+        const testSoundBtn = document.getElementById('testSoundBtn');
+        
+        if (basicSoundSelect) {
+            basicSoundSelect.addEventListener('change', (e) => {
+                // Stop current audio when switching sounds
+                this.stopCurrentAudio();
+                this.updateCustomSoundSection();
+                this.previewBasicSound(e.target.value);
+            });
+        }
+        
+        if (testSoundBtn) {
+            testSoundBtn.addEventListener('click', () => {
+                this.testCurrentSound();
+            });
+        }
+
+        // Stop audio button
+        const stopAudioBtn = document.getElementById('stopAudioBtn');
+        if (stopAudioBtn) {
+            stopAudioBtn.addEventListener('click', () => {
+                this.stopCurrentAudio();
+            });
+        }
+    }
+    
+    updateCustomSoundSection() {
+        const basicSoundSelect = document.getElementById('basicSoundSelect');
+        const customSoundSection = document.getElementById('customSoundSection');
+        
+        if (basicSoundSelect && customSoundSection) {
+            if (basicSoundSelect.value === 'custom') {
+                customSoundSection.style.display = 'block';
+            } else {
+                customSoundSection.style.display = 'none';
+            }
+        }
+    }
+    
+    async previewBasicSound(soundType) {
+        if (soundType === 'custom') return;
+        
+        try {
+            const result = await ipcRenderer.invoke('preview-basic-sound', soundType);
+            if (!result.success) {
+                console.error('Failed to preview sound:', result.error);
+            }
+        } catch (error) {
+            console.error('Error previewing sound:', error);
+        }
+    }
+    
+    async testCurrentSound() {
+        const basicSoundSelect = document.getElementById('basicSoundSelect');
+        const soundType = basicSoundSelect ? basicSoundSelect.value : 'default';
+        
+        console.log('Testing sound type:', soundType);
+        
+        // Stop current audio before testing new sound
+        this.stopCurrentAudio();
+        
+        try {
+            if (soundType === 'custom') {
+                // Test custom sound
+                const result = await ipcRenderer.invoke('preview-sound-file');
+                if (!result.success) {
+                    console.error('Failed to test custom sound:', result.error);
+                    alert('Custom sound test failed: ' + result.error);
+                } else {
+                    console.log('Custom sound test successful');
+                }
+            } else {
+                // Test basic sound
+                const result = await ipcRenderer.invoke('preview-basic-sound', soundType);
+                if (!result.success) {
+                    console.error('Failed to test basic sound:', result.error);
+                    alert('Sound test failed: ' + result.error);
+                } else {
+                    console.log('Basic sound test successful');
+                }
+            }
+        } catch (error) {
+            console.error('Error testing sound:', error);
+            alert('Sound test error: ' + error.message);
+        }
+    }
+
+    // Internal audio player
+    playInternalAudio(filePath, volume = 0.7) {
+        try {
+            console.log('Playing internal audio:', filePath, 'Volume:', volume);
+            
+            // Stop any currently playing audio
+            this.stopCurrentAudio();
+            
+            // Create audio element
+            const audio = new Audio();
+            audio.src = filePath;
+            audio.volume = volume;
+            audio.preload = 'auto';
+            
+            // Store reference to current audio
+            this.currentAudio = audio;
+            
+            // Play the audio
+            audio.play().then(() => {
+                console.log('Audio started playing successfully');
+                this.updateStopButton(true);
+            }).catch((error) => {
+                console.error('Error playing audio:', error);
+                // Fallback to beep if audio fails
+                this.playBeepSound();
+            });
+            
+            // Clean up after audio ends
+            audio.addEventListener('ended', () => {
+                console.log('Audio finished playing');
+                this.stopCurrentAudio();
+            });
+            
+            // Handle errors
+            audio.addEventListener('error', (error) => {
+                console.error('Audio error:', error);
+                this.playBeepSound();
+            });
+            
+        } catch (error) {
+            console.error('Error setting up internal audio:', error);
+            this.playBeepSound();
+        }
+    }
+
+    // Stop current audio
+    stopCurrentAudio() {
+        if (this.currentAudio) {
+            console.log('Stopping current audio');
+            this.currentAudio.pause();
+            this.currentAudio.currentTime = 0;
+            this.currentAudio.remove();
+            this.currentAudio = null;
+            this.updateStopButton(false);
+        }
+    }
+
+    // Update stop button visibility
+    updateStopButton(show) {
+        const stopBtn = document.getElementById('stopAudioBtn');
+        if (stopBtn) {
+            stopBtn.style.display = show ? 'inline-block' : 'none';
+        }
+    }
+
+    // Fallback beep sound
+    playBeepSound() {
+        try {
+            // Create a simple beep sound using Web Audio API
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+            oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.1);
+            oscillator.frequency.setValueAtTime(1200, audioContext.currentTime + 0.2);
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+            
+        } catch (error) {
+            console.error('Error playing beep sound:', error);
+        }
     }
 }
 
@@ -796,4 +1175,20 @@ class TaskManager {
 let taskManager;
 document.addEventListener('DOMContentLoaded', () => {
     taskManager = new TaskManager();
+});
+
+// Listen for audio playback requests from main process
+ipcRenderer.on('play-audio', (event, data) => {
+    console.log('Received audio play request:', data);
+    if (taskManager) {
+        taskManager.playInternalAudio(data.filePath, data.volume);
+    }
+});
+
+// Listen for stop audio requests from main process
+ipcRenderer.on('stop-audio', (event) => {
+    console.log('Received stop audio request');
+    if (taskManager) {
+        taskManager.stopCurrentAudio();
+    }
 });

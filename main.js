@@ -3,6 +3,7 @@ const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const fs = require('fs');
 const notifier = require('node-notifier');
+const { spawn } = require('child_process');
 
 let mainWindow;
 let tray = null;
@@ -11,7 +12,12 @@ let alarms = new Map();
 let settings = {
     minimizeToTray: false,
     closeToTray: false,
-    autoUpdate: true
+    autoUpdate: true,
+    viewMode: 'normal',
+    soundEnabled: true,
+    soundVolume: 0.7,
+    soundType: 'default', // 'default', 'sinking-island', 'custom'
+    customSoundFile: null
 };
 const MAX_TIMEOUT_MS = 0x7fffffff; // Maximum setTimeout delay (~24.8 days)
 
@@ -53,7 +59,20 @@ function loadTasks() {
     // Restore alarms
     tasks.forEach(task => {
       if (task.alarm && task.alarm.enabled) {
-        setAlarm(task.id, task.alarm);
+        // For existing tasks, check if they're already expired before scheduling
+        if (task.alarmTargetTimestamp) {
+          const now = Date.now();
+          const remaining = task.alarmTargetTimestamp - now;
+          if (remaining > 0) {
+            // Only schedule if not expired
+            scheduleAlarm(task.id);
+          } else {
+            console.log(`Task ${task.id} was already expired when app started, not scheduling alarm`);
+          }
+        } else {
+          // For tasks without timing data, set up new alarm
+          setAlarm(task.id, task.alarm);
+        }
       }
     });
   } catch (err) {
@@ -133,20 +152,100 @@ function scheduleAlarm(taskId) {
   alarms.set(taskId, timeoutId);
 }
 
+// Play alarm sound
+function playAlarmSound() {
+  if (!settings.soundEnabled) {
+    console.log('Sound is disabled');
+    return;
+  }
+  
+  try {
+    let soundFile = null;
+    
+    console.log('Current sound type:', settings.soundType);
+    console.log('Custom sound file:', settings.customSoundFile);
+    
+    // Determine which sound to play based on soundType
+    if (settings.soundType === 'sinking-island') {
+      soundFile = path.join(__dirname, 'assets', 'Sinking Island.m4a');
+      console.log('Sinking Island file path:', soundFile);
+    } else if (settings.soundType === 'custom' && settings.customSoundFile) {
+      soundFile = settings.customSoundFile;
+      console.log('Custom file path:', soundFile);
+    }
+    
+    // If we have a sound file, try to play it
+    if (soundFile && fs.existsSync(soundFile)) {
+      console.log('Playing sound file:', soundFile);
+      if (process.platform === 'win32') {
+        // Use internal app audio - send to renderer process
+        try {
+          console.log('Playing audio file with internal app audio');
+          // Send audio file to renderer process to play internally
+          if (mainWindow) {
+            mainWindow.webContents.send('play-audio', {
+              filePath: soundFile,
+              volume: settings.soundVolume || 0.7
+            });
+          }
+        } catch (error) {
+          console.log('Internal audio error, using beep:', error.message);
+          // Fallback to beep
+          spawn('powershell', ['-Command', `[console]::beep(800, 500); [console]::beep(1000, 500); [console]::beep(1200, 500)`]);
+        }
+      } else if (process.platform === 'darwin') {
+        // Use macOS afplay command
+        console.log('macOS command: afplay', soundFile);
+        spawn('afplay', [soundFile]);
+      } else {
+        // Use Linux aplay command
+        console.log('Linux command: aplay', soundFile);
+        spawn('aplay', [soundFile]);
+      }
+    } else {
+      console.log('Sound file not found or using default sound');
+      // Fallback to default system sounds
+      if (process.platform === 'win32') {
+        // Use Windows beep command for a simple alarm sound
+        console.log('Playing default Windows beep');
+        spawn('powershell', ['-Command', `[console]::beep(800, 500); [console]::beep(1000, 500); [console]::beep(1200, 500)`]);
+      } else if (process.platform === 'darwin') {
+        // Use macOS say command
+        console.log('Playing default macOS say');
+        spawn('say', ['-v', 'Alex', 'Time is up!']);
+      } else {
+        // Use Linux beep command
+        console.log('Playing default Linux beep');
+        spawn('beep', ['-f', '800', '-l', '500']);
+      }
+    }
+  } catch (error) {
+    console.log('Could not play alarm sound:', error.message);
+  }
+}
+
 // Show alarm notification
 function showAlarmNotification(taskId) {
   const task = tasks.find(t => t.id === taskId);
   if (task) {
+    // Play alarm sound
+    playAlarmSound();
+    
     // Show system notification
     notifier.notify({
       title: 'Task Reminder',
       message: `Time's up for: ${task.title}`,
-      sound: true,
+      sound: false, // We handle sound ourselves
       wait: true
     });
 
     // Show in-app notification
     if (mainWindow) {
+      // Bring window to front and focus
+      mainWindow.show();
+      mainWindow.focus();
+      mainWindow.moveTop();
+      
       mainWindow.webContents.send('alarm-triggered', {
         taskId: taskId,
         title: task.title
@@ -214,6 +313,7 @@ function createWindow() {
     },
     icon: path.join(__dirname, 'assets/icon.ico'),
     titleBarStyle: 'default',
+    autoHideMenuBar: true,
     show: false
   });
 
@@ -468,7 +568,7 @@ function checkForUpdatesManual() {
         console.log('🔍 Simulated update check completed');
         // Simulate finding an update
         const mockUpdateInfo = {
-          version: '0.1.8',
+          version: '0.2.0',
           releaseNotes: 'Test update for development',
           releaseDate: new Date().toISOString()
         };
@@ -498,6 +598,128 @@ ipcMain.handle('update-settings', (event, newSettings) => {
 
 ipcMain.handle('get-settings', () => {
   return settings;
+});
+
+// Handle sound file selection
+ipcMain.handle('select-sound-file', async () => {
+  try {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: 'Select Alarm Sound File',
+      filters: [
+        { name: 'Audio Files', extensions: ['mp3', 'wav', 'ogg', 'm4a', 'aac'] },
+        { name: 'All Files', extensions: ['*'] }
+      ],
+      properties: ['openFile']
+    });
+    
+    if (!result.canceled && result.filePaths.length > 0) {
+      const filePath = result.filePaths[0];
+      settings.customSoundFile = filePath;
+      return { success: true, filePath: filePath };
+    }
+    
+    return { success: false, error: 'No file selected' };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Handle sound file preview
+ipcMain.handle('preview-sound-file', async () => {
+  console.log('Custom sound preview requested');
+  console.log('Custom sound file:', settings.customSoundFile);
+  console.log('File exists:', settings.customSoundFile ? fs.existsSync(settings.customSoundFile) : false);
+  
+  if (!settings.customSoundFile || !fs.existsSync(settings.customSoundFile)) {
+    return { success: false, error: 'No custom sound file selected' };
+  }
+  
+  try {
+    // Play custom sound directly without using playAlarmSound()
+    const soundFile = settings.customSoundFile;
+    console.log('Playing custom sound file:', soundFile);
+    
+    if (process.platform === 'win32') {
+      // Use internal app audio - send to renderer process
+      console.log('Playing custom sound with internal app audio');
+      if (mainWindow) {
+        mainWindow.webContents.send('play-audio', {
+          filePath: soundFile,
+          volume: settings.soundVolume || 0.7
+        });
+      }
+    } else if (process.platform === 'darwin') {
+      spawn('afplay', [soundFile]);
+    } else {
+      spawn('aplay', [soundFile]);
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.log('Custom sound preview error:', error.message);
+    return { success: false, error: error.message };
+  }
+});
+
+// Handle sound file reset
+ipcMain.handle('reset-sound-file', () => {
+  settings.customSoundFile = null;
+  return { success: true };
+});
+
+// Handle basic sound preview
+ipcMain.handle('preview-basic-sound', async (event, soundType) => {
+  console.log('Preview sound requested:', soundType);
+  console.log('Sound enabled:', settings.soundEnabled);
+  
+  if (!settings.soundEnabled) {
+    return { success: false, error: 'Sound is disabled' };
+  }
+  
+  try {
+    // Play sound directly without changing settings
+    if (soundType === 'default') {
+      // Play default system sound
+      if (process.platform === 'win32') {
+        spawn('powershell', ['-Command', `[console]::beep(800, 500); [console]::beep(1000, 500); [console]::beep(1200, 500)`]);
+      } else if (process.platform === 'darwin') {
+        spawn('say', ['-v', 'Alex', 'Time is up!']);
+      } else {
+        spawn('beep', ['-f', '800', '-l', '500']);
+      }
+    } else if (soundType === 'sinking-island') {
+      // Play Sinking Island sound
+      const soundFile = path.join(__dirname, 'assets', 'Sinking Island.m4a');
+      console.log('Preview Sinking Island file:', soundFile);
+      
+      if (fs.existsSync(soundFile)) {
+        if (process.platform === 'win32') {
+          // Use internal app audio - send to renderer process
+          console.log('Playing preview with internal app audio');
+          if (mainWindow) {
+            mainWindow.webContents.send('play-audio', {
+              filePath: soundFile,
+              volume: settings.soundVolume || 0.7
+            });
+          }
+        } else if (process.platform === 'darwin') {
+          spawn('afplay', [soundFile]);
+        } else {
+          spawn('aplay', [soundFile]);
+        }
+      } else {
+        console.log('Sinking Island file not found, using default sound');
+        if (process.platform === 'win32') {
+          spawn('powershell', ['-Command', `[console]::beep(800, 500); [console]::beep(1000, 500); [console]::beep(1200, 500)`]);
+        }
+      }
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.log('Preview sound error:', error.message);
+    return { success: false, error: error.message };
+  }
 });
 
 // Listen for open-settings event from renderer
