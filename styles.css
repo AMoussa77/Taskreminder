@@ -32,6 +32,25 @@
     --info: #00bcd4;
 }
 
+[data-theme="star-citizen"] {
+    --bg-primary: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+    --bg-secondary: #1a1a2e;
+    --bg-tertiary: #16213e;
+    --text-primary: #00d4ff;
+    --text-secondary: #4fc3f7;
+    --text-muted: #81d4fa;
+    --border-color: #00d4ff;
+    --shadow: rgba(0, 212, 255, 0.3);
+    --accent: #00d4ff;
+    --accent-hover: #00bcd4;
+    --success: #4caf50;
+    --danger: #f44336;
+    --warning: #ff9800;
+    --info: #00d4ff;
+    --glow: 0 0 20px rgba(0, 212, 255, 0.5);
+    --glow-strong: 0 0 30px rgba(0, 212, 255, 0.8);
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -108,8 +127,8 @@ body {
 .add-task-section {
     background: var(--bg-secondary);
     border-radius: 15px;
-    padding: 30px;
-    margin-bottom: 30px;
+    padding: 20px;
+    margin-bottom: 20px;
     box-shadow: 0 10px 30px var(--shadow);
     transition: background 0.3s ease, box-shadow 0.3s ease;
 }
@@ -117,14 +136,14 @@ body {
 .add-task-form {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 15px;
 }
 
 #taskTitle {
-    padding: 15px;
-    border: 2px solid var(--border-color);
-    border-radius: 10px;
-    font-size: 1rem;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.9rem;
     background: var(--bg-secondary);
     color: var(--text-primary);
     transition: border-color 0.3s ease, background 0.3s ease, color 0.3s ease;
@@ -136,12 +155,12 @@ body {
 }
 
 #taskDescription {
-    padding: 15px;
-    border: 2px solid var(--border-color);
-    border-radius: 10px;
-    font-size: 1rem;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.9rem;
     resize: vertical;
-    min-height: 80px;
+    min-height: 60px;
     font-family: inherit;
     background: var(--bg-secondary);
     color: var(--text-primary);
@@ -154,9 +173,9 @@ body {
 }
 
 .alarm-section {
-    border: 2px solid var(--border-color);
-    border-radius: 10px;
-    padding: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 15px;
     background: var(--bg-tertiary);
     transition: background 0.3s ease, border-color 0.3s ease;
 }
@@ -260,16 +279,16 @@ body {
 }
 
 .btn {
-    padding: 15px 30px;
+    padding: 8px 16px;
     border: none;
-    border-radius: 10px;
-    font-size: 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .btn-primary {
@@ -312,7 +331,7 @@ body {
 .tasks-section {
     background: var(--bg-secondary);
     border-radius: 15px;
-    padding: 30px;
+    padding: 20px;
     box-shadow: 0 10px 30px var(--shadow);
     transition: background 0.3s ease, box-shadow 0.3s ease;
 }
@@ -321,50 +340,66 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 25px;
-    padding-bottom: 15px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
     border-bottom: 2px solid #e1e5e9;
 }
 
 .tasks-header h2 {
     color: var(--text-primary);
-    font-size: 1.8rem;
+    font-size: 1.5rem;
 }
 
 .task-stats {
     color: var(--text-secondary);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .tasks-container {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 10px;
 }
 
 .task-item {
     background: var(--bg-tertiary);
-    border: 2px solid var(--border-color);
-    border-radius: 12px;
-    padding: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
     transition: all 0.3s ease;
     position: relative;
 }
 
 .task-item:hover {
     border-color: var(--accent);
-    box-shadow: 0 5px 15px var(--shadow);
+    box-shadow: 0 3px 10px var(--shadow);
 }
 
 .task-item.completed {
-    background: #d4edda;
-    border-color: #c3e6cb;
-    opacity: 0.8;
+    background: #f5f5f5;
+    border-color: #d0d0d0;
+    opacity: 0.7;
 }
 
 .task-item.completed .task-title {
     text-decoration: line-through;
-    color: #6c757d;
+    color: #888;
+}
+
+.task-item.completed .task-description {
+    color: #aaa;
+}
+
+.task-item.completed .task-meta {
+    color: #999;
+}
+
+.task-item.completed .countdown-display {
+    display: none !important;
+}
+
+.task-item.completed .alarm-info {
+    display: none !important;
 }
 
 .task-item.expired {
@@ -408,45 +443,46 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 .task-title {
-    font-size: 1.2rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 5px;
+    margin-bottom: 3px;
 }
 
 .task-description {
     color: var(--text-secondary);
-    margin-bottom: 15px;
-    line-height: 1.5;
+    margin-bottom: 8px;
+    line-height: 1.4;
+    font-size: 0.9rem;
 }
 
 .task-meta {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: 8px;
 }
 
 .task-created {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: var(--text-muted);
 }
 
 .task-actions {
     display: flex;
-    gap: 10px;
+    gap: 6px;
 }
 
 .task-alarm {
     background: #fff3cd;
     border: 1px solid #ffeaa7;
-    border-radius: 8px;
-    padding: 10px;
-    margin-top: 10px;
+    border-radius: 6px;
+    padding: 6px;
+    margin-top: 6px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -455,9 +491,10 @@ body {
 .alarm-info {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     color: #856404;
     font-weight: 500;
+    font-size: 0.85rem;
 }
 
 /* Dark mode alarm info */
@@ -468,36 +505,40 @@ body {
 .alarm-time {
     font-family: 'Courier New', monospace;
     background: #fff;
-    padding: 4px 8px;
-    border-radius: 4px;
+    padding: 3px 6px;
+    border-radius: 3px;
     border: 1px solid #ffeaa7;
+    font-size: 0.8rem;
 }
 
 .countdown-display {
     background: #e3f2fd;
-    border: 1px solid #bbdefb;
-    border-radius: 8px;
-    padding: 10px;
-    margin-top: 10px;
+    border: 2px solid #1976d2;
+    border-radius: 6px;
+    padding: 8px;
+    margin-top: 6px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    box-shadow: 0 2px 4px rgba(25, 118, 210, 0.3);
 }
 
 .countdown-time {
     font-family: 'Courier New', monospace;
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     font-weight: bold;
-    color: #1976d2;
+    color: #0d47a1;
 }
 
 .countdown-time.expired {
     color: #d32f2f;
+    font-weight: 900;
 }
 
 .countdown-label {
-    color: #1976d2;
-    font-weight: 500;
+    color: #0d47a1;
+    font-weight: 600;
+    font-size: 0.85rem;
 }
 
 .countdown-label.expired {
@@ -505,20 +546,30 @@ body {
 }
 
 /* Dark mode countdown colors */
+[data-theme="dark"] .countdown-display {
+    background: #1a237e;
+    border: 2px solid #3f51b5;
+    box-shadow: 0 2px 8px rgba(63, 81, 181, 0.4);
+}
+
 [data-theme="dark"] .countdown-time {
-    color: #4a9eff;
+    color: #90caf9;
+    font-weight: 700;
 }
 
 [data-theme="dark"] .countdown-time.expired {
     color: #ff6b6b;
+    font-weight: 900;
 }
 
 [data-theme="dark"] .countdown-label {
-    color: #4a9eff;
+    color: #90caf9;
+    font-weight: 600;
 }
 
 [data-theme="dark"] .countdown-label.expired {
     color: #ff6b6b;
+    font-weight: 700;
 }
 
 .modal {
@@ -529,7 +580,7 @@ body {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.5);
+    background-color: rgba(0,0,0,0.8);
     animation: fadeIn 0.3s ease;
 }
 
@@ -542,31 +593,12 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-/* Alarm modal specific styles */
-#alarmModal.show {
     z-index: 9999;
-    background-color: rgba(0,0,0,0.8);
 }
 
-#alarmModal .modal-content {
-    border: 3px solid var(--danger);
-    box-shadow: 0 0 20px rgba(220, 53, 69, 0.5);
-    animation: alarmPulse 1s infinite alternate;
-}
+/* All modals now use the same styling as alarm modal */
 
-/* Title Required modal specific styles */
-#titleRequiredModal.show {
-    z-index: 9999;
-    background-color: rgba(0,0,0,0.8);
-}
-
-#titleRequiredModal .modal-content {
-    border: 3px solid var(--warning);
-    box-shadow: 0 0 20px rgba(255, 193, 7, 0.5);
-    animation: titleRequiredPulse 1s infinite alternate;
-}
+/* All modals now use consistent alarm-style appearance */
 
 /* Expired task styles */
 .task-item.expired {
@@ -607,16 +639,7 @@ body {
     }
 }
 
-@keyframes titleRequiredPulse {
-    from {
-        box-shadow: 0 0 20px rgba(255, 193, 7, 0.5);
-        transform: scale(1);
-    }
-    to {
-        box-shadow: 0 0 30px rgba(255, 193, 7, 0.8);
-        transform: scale(1.02);
-    }
-}
+/* Removed titleRequiredPulse - all modals now use alarmPulse */
 
 .modal-content {
     background: white;
@@ -624,15 +647,82 @@ body {
     padding: 0;
     max-width: 500px;
     width: 90%;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-    animation: slideIn 0.3s ease;
+    border: 3px solid var(--danger);
+    box-shadow: 0 0 20px rgba(220, 53, 69, 0.5);
+    animation: alarmPulse 1s infinite alternate, slideIn 0.3s ease;
 }
 
 /* Dark mode modal styles */
 [data-theme="dark"] .modal-content {
     background: var(--bg-secondary);
+    border: 3px solid var(--danger);
+    box-shadow: 0 0 20px rgba(220, 53, 69, 0.5);
+    animation: alarmPulse 1s infinite alternate, slideIn 0.3s ease;
+}
+
+/* Settings modal - no pulsing animation */
+#settingsModal .modal-content {
+    animation: slideIn 0.3s ease;
+}
+
+[data-theme="dark"] #settingsModal .modal-content {
+    animation: slideIn 0.3s ease;
+}
+
+/* Test Sound Inline Feedback */
+.test-sound-feedback {
+    margin-top: 10px;
+    padding: 8px;
+    border-radius: 6px;
+    background: var(--bg-tertiary);
     border: 1px solid var(--border-color);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    transition: opacity 0.3s ease;
+}
+
+.test-sound-message {
+    font-size: 0.9rem;
+    margin: 0;
+    padding: 8px 12px;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: 500;
+}
+
+.test-sound-message.info {
+    background: #e3f2fd;
+    color: #1976d2;
+    border: 1px solid #bbdefb;
+}
+
+.test-sound-message.success {
+    background: #e8f5e8;
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+}
+
+.test-sound-message.error {
+    background: #ffebee;
+    color: #c62828;
+    border: 1px solid #ffcdd2;
+}
+
+/* Dark mode test sound message */
+[data-theme="dark"] .test-sound-message.info {
+    background: #1e3a5f;
+    color: #4a9eff;
+    border-color: #2d5a8a;
+}
+
+[data-theme="dark"] .test-sound-message.success {
+    background: #1e3a1e;
+    color: #4caf50;
+    border-color: #2d5a2d;
+}
+
+[data-theme="dark"] .test-sound-message.error {
+    background: #3a1e1e;
+    color: #f44336;
+    border-color: #5a2d2d;
 }
 
 .modal-header {
@@ -965,6 +1055,397 @@ body {
     opacity: 0.8;
 }
 
+/* Star Citizen Theme Specific Styles */
+[data-theme="star-citizen"] {
+    font-family: 'Orbitron', 'Segoe UI', monospace;
+}
+
+[data-theme="star-citizen"] .container {
+    background: rgba(26, 26, 46, 0.95);
+    border: 2px solid var(--border-color);
+    border-radius: 15px;
+    box-shadow: var(--glow-strong);
+    backdrop-filter: blur(10px);
+}
+
+[data-theme="star-citizen"] .header {
+    background: linear-gradient(90deg, rgba(0, 212, 255, 0.1) 0%, rgba(0, 212, 255, 0.05) 100%);
+    border-bottom: 2px solid var(--border-color);
+    border-radius: 15px 15px 0 0;
+    box-shadow: var(--glow);
+}
+
+[data-theme="star-citizen"] .header h1 {
+    text-shadow: 0 0 10px var(--accent);
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+[data-theme="star-citizen"] .version-badge {
+    background: linear-gradient(45deg, var(--accent), var(--accent-hover));
+    box-shadow: var(--glow);
+    border: 1px solid var(--border-color);
+}
+
+[data-theme="star-citizen"] .btn {
+    background: linear-gradient(45deg, rgba(0, 212, 255, 0.2), rgba(0, 212, 255, 0.1));
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: var(--glow);
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+[data-theme="star-citizen"] .btn:hover {
+    background: linear-gradient(45deg, rgba(0, 212, 255, 0.3), rgba(0, 212, 255, 0.2));
+    box-shadow: var(--glow-strong);
+    transform: translateY(-2px);
+}
+
+[data-theme="star-citizen"] .btn-primary {
+    background: linear-gradient(45deg, var(--accent), var(--accent-hover));
+    color: #000;
+    font-weight: 700;
+}
+
+[data-theme="star-citizen"] .btn-danger {
+    background: linear-gradient(45deg, #f44336, #d32f2f);
+    border-color: #f44336;
+    box-shadow: 0 0 20px rgba(244, 67, 54, 0.5);
+}
+
+[data-theme="star-citizen"] .btn-success {
+    background: linear-gradient(45deg, #4caf50, #388e3c);
+    border-color: #4caf50;
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.5);
+}
+
+[data-theme="star-citizen"] .task-item {
+    background: rgba(22, 33, 62, 0.8);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: var(--glow);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+[data-theme="star-citizen"] .task-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.1), transparent);
+    transition: left 0.5s ease;
+}
+
+[data-theme="star-citizen"] .task-item:hover::before {
+    left: 100%;
+}
+
+[data-theme="star-citizen"] .task-item:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--glow-strong);
+    border-color: var(--accent);
+}
+
+[data-theme="star-citizen"] .task-title {
+    color: var(--text-primary);
+    text-shadow: 0 0 5px var(--accent);
+    font-weight: 600;
+}
+
+[data-theme="star-citizen"] .task-description {
+    color: var(--text-secondary);
+}
+
+[data-theme="star-citizen"] .countdown-display {
+    background: linear-gradient(45deg, rgba(0, 212, 255, 0.3), rgba(0, 212, 255, 0.2));
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    box-shadow: var(--glow-strong);
+    color: var(--accent);
+    font-weight: 700;
+    text-shadow: 0 0 8px var(--accent);
+}
+
+[data-theme="star-citizen"] .countdown-time {
+    color: var(--accent);
+    font-weight: 800;
+    text-shadow: 0 0 8px var(--accent);
+}
+
+[data-theme="star-citizen"] .countdown-time.expired {
+    color: #ff6b6b;
+    text-shadow: 0 0 8px #ff6b6b;
+}
+
+[data-theme="star-citizen"] .countdown-label {
+    color: var(--accent);
+    font-weight: 600;
+    text-shadow: 0 0 5px var(--accent);
+}
+
+[data-theme="star-citizen"] .countdown-label.expired {
+    color: #ff6b6b;
+    text-shadow: 0 0 5px #ff6b6b;
+}
+
+[data-theme="star-citizen"] .alarm-info {
+    background: linear-gradient(45deg, rgba(244, 67, 54, 0.2), rgba(244, 67, 54, 0.1));
+    border: 1px solid #f44336;
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(244, 67, 54, 0.3);
+    color: #f44336;
+}
+
+[data-theme="star-citizen"] .modal-content {
+    background: rgba(26, 26, 46, 0.95);
+    border: 2px solid var(--border-color);
+    border-radius: 15px;
+    box-shadow: var(--glow-strong);
+    backdrop-filter: blur(15px);
+}
+
+[data-theme="star-citizen"] .modal-header {
+    background: linear-gradient(90deg, rgba(0, 212, 255, 0.1) 0%, rgba(0, 212, 255, 0.05) 100%);
+    border-bottom: 2px solid var(--border-color);
+    border-radius: 15px 15px 0 0;
+}
+
+[data-theme="star-citizen"] .modal-header h3 {
+    color: var(--text-primary);
+    text-shadow: 0 0 10px var(--accent);
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+[data-theme="star-citizen"] .close-btn {
+    color: var(--text-primary);
+    text-shadow: 0 0 5px var(--accent);
+    transition: all 0.3s ease;
+}
+
+[data-theme="star-citizen"] .close-btn:hover {
+    color: var(--accent);
+    text-shadow: 0 0 10px var(--accent);
+    transform: scale(1.1);
+}
+
+[data-theme="star-citizen"] .input-group input,
+[data-theme="star-citizen"] .input-group select,
+[data-theme="star-citizen"] .input-group textarea {
+    background: rgba(22, 33, 62, 0.8);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    box-shadow: var(--glow);
+    transition: all 0.3s ease;
+}
+
+[data-theme="star-citizen"] .input-group input:focus,
+[data-theme="star-citizen"] .input-group select:focus,
+[data-theme="star-citizen"] .input-group textarea:focus {
+    border-color: var(--accent);
+    box-shadow: var(--glow-strong);
+    outline: none;
+}
+
+[data-theme="star-citizen"] .settings-section {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: rgba(22, 33, 62, 0.5);
+    box-shadow: var(--glow);
+}
+
+[data-theme="star-citizen"] .settings-section h4 {
+    color: var(--text-primary);
+    text-shadow: 0 0 5px var(--accent);
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+[data-theme="star-citizen"] .setting-item {
+    border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+[data-theme="star-citizen"] .setting-item:hover {
+    background: rgba(0, 212, 255, 0.05);
+}
+
+[data-theme="star-citizen"] .theme-select,
+[data-theme="star-citizen"] .view-mode-select,
+[data-theme="star-citizen"] .sound-select {
+    background: rgba(22, 33, 62, 0.8);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    box-shadow: var(--glow);
+}
+
+[data-theme="star-citizen"] .theme-select option,
+[data-theme="star-citizen"] .view-mode-select option,
+[data-theme="star-citizen"] .sound-select option {
+    background: rgba(22, 33, 62, 0.95);
+    color: var(--text-primary);
+    padding: 8px;
+}
+
+/* General dropdown option styling for better visibility */
+select option {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    padding: 8px;
+}
+
+[data-theme="dark"] select {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.2);
+    outline: none;
+}
+
+[data-theme="dark"] select:hover {
+    border-color: var(--accent);
+}
+
+[data-theme="dark"] select option {
+    background: #2d2d2d;
+    color: #ffffff;
+    padding: 8px;
+}
+
+[data-theme="star-citizen"] select option {
+    background: rgba(22, 33, 62, 0.95);
+    color: #00d4ff;
+}
+
+[data-theme="star-citizen"] .toggle-switch {
+    position: relative;
+    width: 50px;
+    height: 24px;
+    background: rgba(22, 33, 62, 0.8);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: var(--glow);
+    transition: all 0.3s ease;
+}
+
+[data-theme="star-citizen"] .toggle-switch:hover {
+    box-shadow: var(--glow-strong);
+}
+
+[data-theme="star-citizen"] .toggle-slider {
+    background: linear-gradient(45deg, var(--accent), var(--accent-hover));
+    box-shadow: 0 0 10px var(--accent);
+}
+
+[data-theme="star-citizen"] .toggle-input:checked + .toggle-slider {
+    background: linear-gradient(45deg, #4caf50, #388e3c);
+    box-shadow: 0 0 10px #4caf50;
+}
+
+[data-theme="star-citizen"] .test-sound-feedback {
+    background: rgba(22, 33, 62, 0.8);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: var(--glow);
+}
+
+[data-theme="star-citizen"] .test-sound-message {
+    color: var(--text-primary);
+    text-shadow: 0 0 5px var(--accent);
+}
+
+/* Star Citizen Scroll Animations */
+[data-theme="star-citizen"] .tasks-section {
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent) rgba(22, 33, 62, 0.5);
+}
+
+[data-theme="star-citizen"] .tasks-section::-webkit-scrollbar {
+    width: 8px;
+}
+
+[data-theme="star-citizen"] .tasks-section::-webkit-scrollbar-track {
+    background: rgba(22, 33, 62, 0.5);
+    border-radius: 4px;
+}
+
+[data-theme="star-citizen"] .tasks-section::-webkit-scrollbar-thumb {
+    background: linear-gradient(45deg, var(--accent), var(--accent-hover));
+    border-radius: 4px;
+    box-shadow: var(--glow);
+}
+
+[data-theme="star-citizen"] .tasks-section::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(45deg, var(--accent-hover), var(--accent));
+    box-shadow: var(--glow-strong);
+}
+
+/* Star Citizen Task List Scroll Animation */
+@keyframes starCitizenScroll {
+    0% {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+[data-theme="star-citizen"] .task-item {
+    animation: starCitizenScroll 0.6s ease-out;
+}
+
+[data-theme="star-citizen"] .task-item:nth-child(odd) {
+    animation-delay: 0.1s;
+}
+
+[data-theme="star-citizen"] .task-item:nth-child(even) {
+    animation-delay: 0.2s;
+}
+
+[data-theme="star-citizen"] .task-item.completed {
+    background: rgba(40, 40, 40, 0.6);
+    border-color: #333;
+    opacity: 0.5;
+    box-shadow: none;
+}
+
+[data-theme="star-citizen"] .task-item.completed .task-title {
+    color: #666;
+    text-shadow: none;
+}
+
+[data-theme="star-citizen"] .task-item.completed .task-description {
+    color: #555;
+}
+
+[data-theme="star-citizen"] .task-item.completed .task-meta {
+    color: #555;
+}
+
+[data-theme="star-citizen"] .task-item.completed:hover {
+    transform: none;
+    box-shadow: none;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     .container {
@@ -991,12 +1472,16 @@ body {
     }
     
     .alarm-inputs {
-        flex-direction: column;
-        align-items: center;
+        flex-direction: row;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
     }
     
     .time-input-group {
-        width: 100px;
+        width: 60px;
+        min-width: 60px;
     }
 }
 
@@ -1016,6 +1501,24 @@ body {
 /* Additional dark mode modal text styles */
 [data-theme="dark"] .modal-body p {
     color: var(--text-primary);
+}
+
+[data-theme="dark"] .task-item.completed {
+    background: #2a2a2a;
+    border-color: #4a4a4a;
+    opacity: 0.6;
+}
+
+[data-theme="dark"] .task-item.completed .task-title {
+    color: #666;
+}
+
+[data-theme="dark"] .task-item.completed .task-description {
+    color: #555;
+}
+
+[data-theme="dark"] .task-item.completed .task-meta {
+    color: #555;
 }
 
 [data-theme="dark"] .modal-body ul {
@@ -1494,6 +1997,23 @@ body {
     border-color: var(--accent);
 }
 
+/* Dark mode for theme select */
+[data-theme="dark"] .theme-select {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .theme-select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.2);
+    outline: none;
+}
+
+[data-theme="dark"] .theme-select:hover {
+    border-color: var(--accent);
+}
+
 /* Mini Mode Styles - Cool and Compact Design */
 [data-view-mode="mini"] {
     --font-size-small: 0.7rem;
@@ -1627,21 +2147,35 @@ body {
     font-size: 0.7rem;
 }
 
+[data-view-mode="mini"] .alarm-inputs {
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
 [data-view-mode="mini"] .time-input-group {
     gap: 3px;
+    min-width: 50px;
+    flex-shrink: 0;
 }
 
 [data-view-mode="mini"] .time-input-group input {
-    padding: 6px;
-    font-size: 0.75rem;
-    width: 60px;
+    padding: 4px 6px;
+    font-size: 0.7rem;
+    width: 50px;
+    min-width: 50px;
     border-radius: 4px;
     border: 1px solid var(--border-color);
+    text-align: center;
 }
 
 [data-view-mode="mini"] .time-input-group label {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 500;
+    text-align: center;
 }
 
 [data-view-mode="mini"] .btn {
@@ -1711,16 +2245,20 @@ body {
 }
 
 [data-view-mode="mini"] .task-actions {
-    gap: 6px;
+    gap: 4px;
     width: 100%;
     justify-content: flex-end;
 }
 
 [data-view-mode="mini"] .task-actions .btn {
-    padding: 6px 10px;
+    padding: 6px 8px;
     font-size: 0.7rem;
     flex: 1;
     max-width: 80px;
+    min-width: 65px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 [data-view-mode="mini"] .task-meta {
@@ -1904,6 +2442,9 @@ body {
         justify-content: center;
         padding: 8px 12px;
         font-size: 0.75rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
     [data-view-mode="mini"] .header-actions {
@@ -1915,5 +2456,32 @@ body {
     [data-view-mode="mini"] .header-actions .btn {
         padding: 6px 10px;
         font-size: 0.75rem;
+    }
+    
+    /* Mini mode alarm inputs on small screens */
+    [data-view-mode="mini"] .alarm-inputs {
+        display: flex;
+        flex-direction: row;
+        gap: 4px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    [data-view-mode="mini"] .time-input-group {
+        width: 45px;
+        min-width: 45px;
+        flex-shrink: 0;
+    }
+    
+    [data-view-mode="mini"] .time-input-group input {
+        width: 45px;
+        min-width: 45px;
+        padding: 3px 4px;
+        font-size: 0.65rem;
+    }
+    
+    [data-view-mode="mini"] .time-input-group label {
+        font-size: 0.6rem;
     }
 }

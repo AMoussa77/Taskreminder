@@ -164,9 +164,36 @@ class TaskManager {
         const cancelSettings = document.getElementById('cancelSettings');
         const saveSettings = document.getElementById('saveSettings');
         
-        if (closeSettingsModal) closeSettingsModal.addEventListener('click', () => this.hideSettingsModal());
-        if (cancelSettings) cancelSettings.addEventListener('click', () => this.hideSettingsModal());
+        if (closeSettingsModal) closeSettingsModal.addEventListener('click', () => {
+            this.stopCurrentAudio();
+            this.hideSettingsModal();
+        });
+        if (cancelSettings) cancelSettings.addEventListener('click', () => {
+            this.stopCurrentAudio();
+            this.cancelSettings();
+        });
         if (saveSettings) saveSettings.addEventListener('click', () => this.saveSettings());
+
+        // Real-time volume control
+        const soundVolumeSlider = document.getElementById('soundVolumeSlider');
+        if (soundVolumeSlider) {
+            soundVolumeSlider.addEventListener('input', (e) => {
+                const volume = parseFloat(e.target.value);
+                this.updateCurrentAudioVolume(volume);
+            });
+        }
+
+        // Real-time theme switching (preview only, not saved until Save is clicked)
+        const themeSelect = document.getElementById('themeSelect');
+        if (themeSelect) {
+            themeSelect.addEventListener('change', (e) => {
+                const selectedTheme = e.target.value;
+                document.documentElement.setAttribute('data-theme', selectedTheme);
+                // Don't save to localStorage here - only preview
+            });
+        }
+
+        // Test Sound feedback is now inline - no modal events needed
 
         // Load saved theme and settings
         this.loadTheme();
@@ -756,9 +783,24 @@ class TaskManager {
         }
     }
 
+    cancelSettings() {
+        // Revert to original theme
+        if (this.originalTheme) {
+            document.documentElement.setAttribute('data-theme', this.originalTheme);
+        }
+        
+        // Revert all settings to their original values
+        this.loadSettingsToModal();
+        
+        this.hideSettingsModal();
+    }
+
     loadSettingsToModal() {
+        // Store original theme for cancel functionality
+        this.originalTheme = document.documentElement.getAttribute('data-theme');
+        
         // Load current settings into modal
-        const darkModeToggle = document.getElementById('darkModeToggle');
+        const themeSelect = document.getElementById('themeSelect');
         const minimizeToTrayToggle = document.getElementById('minimizeToTrayToggle');
         const closeToTrayToggle = document.getElementById('closeToTrayToggle');
         const autoUpdateToggle = document.getElementById('autoUpdateToggle');
@@ -767,9 +809,9 @@ class TaskManager {
         const soundVolumeSlider = document.getElementById('soundVolumeSlider');
         const basicSoundSelect = document.getElementById('basicSoundSelect');
 
-        if (darkModeToggle) {
+        if (themeSelect) {
             const currentTheme = document.documentElement.getAttribute('data-theme');
-            darkModeToggle.checked = currentTheme === 'dark';
+            themeSelect.value = currentTheme;
         }
 
         if (minimizeToTrayToggle) {
@@ -807,7 +849,7 @@ class TaskManager {
     }
 
     saveSettings() {
-        const darkModeToggle = document.getElementById('darkModeToggle');
+        const themeSelect = document.getElementById('themeSelect');
         const minimizeToTrayToggle = document.getElementById('minimizeToTrayToggle');
         const closeToTrayToggle = document.getElementById('closeToTrayToggle');
         const autoUpdateToggle = document.getElementById('autoUpdateToggle');
@@ -816,12 +858,11 @@ class TaskManager {
         const soundVolumeSlider = document.getElementById('soundVolumeSlider');
         const basicSoundSelect = document.getElementById('basicSoundSelect');
 
-        // Save dark mode setting
-        if (darkModeToggle) {
-            const isDarkMode = darkModeToggle.checked;
-            const newTheme = isDarkMode ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
+        // Save theme setting
+        if (themeSelect) {
+            const selectedTheme = themeSelect.value;
+            document.documentElement.setAttribute('data-theme', selectedTheme);
+            localStorage.setItem('theme', selectedTheme);
         }
 
         // Save view mode setting
@@ -904,7 +945,6 @@ class TaskManager {
     
     setupSoundFilePicker() {
         const selectSoundBtn = document.getElementById('selectSoundBtn');
-        const previewSoundBtn = document.getElementById('previewSoundBtn');
         const resetSoundBtn = document.getElementById('resetSoundBtn');
         
         if (selectSoundBtn) {
@@ -914,25 +954,11 @@ class TaskManager {
                     if (result.success) {
                         localStorage.setItem('customSoundFile', result.filePath);
                         this.loadCustomSoundInfo();
-                        this.updateSoundButtons();
                     } else {
                         console.error('Failed to select sound file:', result.error);
                     }
                 } catch (error) {
                     console.error('Error selecting sound file:', error);
-                }
-            });
-        }
-        
-        if (previewSoundBtn) {
-            previewSoundBtn.addEventListener('click', async () => {
-                try {
-                    const result = await ipcRenderer.invoke('preview-sound-file');
-                    if (!result.success) {
-                        console.error('Failed to preview sound:', result.error);
-                    }
-                } catch (error) {
-                    console.error('Error previewing sound:', error);
                 }
             });
         }
@@ -954,7 +980,6 @@ class TaskManager {
                         localStorage.removeItem('customSoundFile');
                         this.loadCustomSoundInfo();
                         this.updateCustomSoundSection();
-                        this.updateSoundButtons();
                     }
                 } catch (error) {
                     console.error('Error resetting sound file:', error);
@@ -978,17 +1003,8 @@ class TaskManager {
             soundInfo.style.display = 'none';
         }
         
-        this.updateSoundButtons();
     }
     
-    updateSoundButtons() {
-        const customSoundFile = localStorage.getItem('customSoundFile');
-        const previewSoundBtn = document.getElementById('previewSoundBtn');
-        
-        if (previewSoundBtn) {
-            previewSoundBtn.disabled = !customSoundFile;
-        }
-    }
     
     setupBasicSoundSelection() {
         const basicSoundSelect = document.getElementById('basicSoundSelect');
@@ -1048,7 +1064,15 @@ class TaskManager {
         const basicSoundSelect = document.getElementById('basicSoundSelect');
         const soundType = basicSoundSelect ? basicSoundSelect.value : 'default';
         
-        console.log('Testing sound type:', soundType);
+        // Get current volume setting from the slider (not localStorage)
+        const soundVolumeSlider = document.getElementById('soundVolumeSlider');
+        const soundVolume = soundVolumeSlider ? parseFloat(soundVolumeSlider.value) : 0.7;
+        
+        console.log('Testing sound type:', soundType, 'Volume:', soundVolume);
+        
+        // Show inline feedback
+        this.showTestSoundFeedback();
+        this.updateTestSoundMessage('Preparing to play sound...', 'info');
         
         // Stop current audio before testing new sound
         this.stopCurrentAudio();
@@ -1056,26 +1080,43 @@ class TaskManager {
         try {
             if (soundType === 'custom') {
                 // Test custom sound
-                const result = await ipcRenderer.invoke('preview-sound-file');
-                if (!result.success) {
-                    console.error('Failed to test custom sound:', result.error);
-                    alert('Custom sound test failed: ' + result.error);
+                const customSoundFile = localStorage.getItem('customSoundFile');
+                if (customSoundFile) {
+                    this.updateTestSoundMessage('Playing custom sound...', 'success');
+                    this.playInternalAudio(customSoundFile, soundVolume);
                 } else {
-                    console.log('Custom sound test successful');
+                    this.updateTestSoundMessage('No custom sound file selected', 'error');
                 }
             } else {
-                // Test basic sound
-                const result = await ipcRenderer.invoke('preview-basic-sound', soundType);
-                if (!result.success) {
-                    console.error('Failed to test basic sound:', result.error);
-                    alert('Sound test failed: ' + result.error);
-                } else {
-                    console.log('Basic sound test successful');
-                }
+                // Test basic sound - use internal audio player
+                this.updateTestSoundMessage(`Playing ${soundType} sound...`, 'success');
+                this.playBasicSoundInternal(soundType, soundVolume);
             }
         } catch (error) {
             console.error('Error testing sound:', error);
-            alert('Sound test error: ' + error.message);
+            this.updateTestSoundMessage('Sound test error: ' + error.message, 'error');
+        }
+    }
+
+    // Play basic sound internally with volume control
+    playBasicSoundInternal(soundType, volume = 0.7) {
+        try {
+            let soundPath;
+            
+            if (soundType === 'sinking-island') {
+                soundPath = 'assets/Sinking Island.m4a';
+            } else {
+                // Default sound - use beep
+                this.playBeepSound(volume);
+                return;
+            }
+            
+            console.log('Playing basic sound internally:', soundType, 'Volume:', volume);
+            this.playInternalAudio(soundPath, volume);
+            
+        } catch (error) {
+            console.error('Error playing basic sound:', error);
+            this.updateTestSoundMessage('Failed to play sound: ' + error.message, 'error');
         }
     }
 
@@ -1100,27 +1141,41 @@ class TaskManager {
             audio.play().then(() => {
                 console.log('Audio started playing successfully');
                 this.updateStopButton(true);
+                // Update test sound modal if it's open
+                this.updateTestSoundMessage('Sound is now playing...', 'success');
             }).catch((error) => {
                 console.error('Error playing audio:', error);
+                this.updateTestSoundMessage('Failed to play audio: ' + error.message, 'error');
                 // Fallback to beep if audio fails
-                this.playBeepSound();
+                const soundVolumeSlider = document.getElementById('soundVolumeSlider');
+                const volume = soundVolumeSlider ? parseFloat(soundVolumeSlider.value) : 0.7;
+                this.playBeepSound(volume);
             });
             
             // Clean up after audio ends
             audio.addEventListener('ended', () => {
                 console.log('Audio finished playing');
+                this.updateTestSoundMessage('Sound playback completed', 'info');
                 this.stopCurrentAudio();
+                // Hide feedback after a delay
+                setTimeout(() => {
+                    this.hideTestSoundFeedback();
+                }, 2000);
             });
             
             // Handle errors
             audio.addEventListener('error', (error) => {
                 console.error('Audio error:', error);
-                this.playBeepSound();
+                const soundVolumeSlider = document.getElementById('soundVolumeSlider');
+                const volume = soundVolumeSlider ? parseFloat(soundVolumeSlider.value) : 0.7;
+                this.playBeepSound(volume);
             });
             
         } catch (error) {
             console.error('Error setting up internal audio:', error);
-            this.playBeepSound();
+            const soundVolumeSlider = document.getElementById('soundVolumeSlider');
+            const volume = soundVolumeSlider ? parseFloat(soundVolumeSlider.value) : 0.7;
+            this.playBeepSound(volume);
         }
     }
 
@@ -1133,6 +1188,27 @@ class TaskManager {
             this.currentAudio.remove();
             this.currentAudio = null;
             this.updateStopButton(false);
+            // Hide feedback when audio is stopped
+            this.hideTestSoundFeedback();
+        }
+        
+        if (this.currentAudioContext) {
+            this.currentAudioContext.close();
+            this.currentAudioContext = null;
+            this.currentGainNode = null;
+        }
+    }
+
+    // Update volume of currently playing audio
+    updateCurrentAudioVolume(volume) {
+        if (this.currentAudio) {
+            this.currentAudio.volume = volume;
+            console.log('Updated audio volume to:', volume);
+        }
+        
+        if (this.currentAudioContext && this.currentGainNode) {
+            this.currentGainNode.gain.value = volume * 0.3; // Scale for beep sound
+            console.log('Updated beep volume to:', volume * 0.3);
         }
     }
 
@@ -1145,12 +1221,21 @@ class TaskManager {
     }
 
     // Fallback beep sound
-    playBeepSound() {
+    playBeepSound(volume = 0.7) {
         try {
+            // Stop any existing beep
+            if (this.currentAudioContext) {
+                this.currentAudioContext.close();
+            }
+            
             // Create a simple beep sound using Web Audio API
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
+            
+            // Store references for real-time volume control
+            this.currentAudioContext = audioContext;
+            this.currentGainNode = gainNode;
             
             oscillator.connect(gainNode);
             gainNode.connect(audioContext.destination);
@@ -1159,14 +1244,47 @@ class TaskManager {
             oscillator.frequency.setValueAtTime(1000, audioContext.currentTime + 0.1);
             oscillator.frequency.setValueAtTime(1200, audioContext.currentTime + 0.2);
             
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            // Use the volume parameter instead of fixed 0.3
+            const beepVolume = volume * 0.3; // Scale down the beep volume
+            gainNode.gain.setValueAtTime(beepVolume, audioContext.currentTime);
             gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
             
             oscillator.start(audioContext.currentTime);
             oscillator.stop(audioContext.currentTime + 0.5);
             
+            // Clean up after beep finishes
+            setTimeout(() => {
+                if (this.currentAudioContext === audioContext) {
+                    this.currentAudioContext = null;
+                    this.currentGainNode = null;
+                }
+            }, 600);
+            
         } catch (error) {
             console.error('Error playing beep sound:', error);
+        }
+    }
+
+    // Test Sound Inline Feedback methods
+    showTestSoundFeedback() {
+        const feedbackEl = document.getElementById('testSoundFeedback');
+        if (feedbackEl) {
+            feedbackEl.style.display = 'block';
+        }
+    }
+
+    hideTestSoundFeedback() {
+        const feedbackEl = document.getElementById('testSoundFeedback');
+        if (feedbackEl) {
+            feedbackEl.style.display = 'none';
+        }
+    }
+
+    updateTestSoundMessage(message, type = 'info') {
+        const messageEl = document.getElementById('testSoundMessage');
+        if (messageEl) {
+            messageEl.textContent = message;
+            messageEl.className = `test-sound-message ${type}`;
         }
     }
 }
