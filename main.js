@@ -568,7 +568,7 @@ function checkForUpdatesManual() {
         console.log('🔍 Simulated update check completed');
         // Simulate finding an update
         const mockUpdateInfo = {
-          version: '0.2.0',
+          version: '1.1.0',
           releaseNotes: 'Test update for development',
           releaseDate: new Date().toISOString()
         };

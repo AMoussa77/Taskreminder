@@ -812,6 +812,44 @@ body {
     animation: slideDown 0.3s ease-out;
 }
 
+/* Simplified update notification */
+.update-notification-simple {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--bg-primary);
+    border: 2px solid var(--accent);
+    border-radius: 6px;
+    margin-top: 8px;
+    box-shadow: 0 0 10px var(--accent), 0 0 20px var(--accent), 0 0 30px var(--accent);
+    animation: glowPulse 2s ease-in-out infinite alternate;
+}
+
+.update-info-simple {
+    display: flex;
+    align-items: center;
+}
+
+.update-version-simple {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-right: 8px;
+    text-shadow: 0 0 5px var(--accent);
+}
+
+.update-actions-simple {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-small {
+    padding: 6px 12px;
+    font-size: 12px;
+    min-width: 60px;
+}
+
 @keyframes slideDown {
     from {
         opacity: 0;
@@ -820,6 +858,17 @@ body {
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+@keyframes glowPulse {
+    0% {
+        box-shadow: 0 0 5px var(--accent), 0 0 10px var(--accent), 0 0 15px var(--accent);
+        border-color: var(--accent);
+    }
+    100% {
+        box-shadow: 0 0 15px var(--accent), 0 0 25px var(--accent), 0 0 35px var(--accent);
+        border-color: var(--accent);
     }
 }
 
@@ -883,6 +932,17 @@ body {
 
 [data-theme="dark"] .update-version {
     color: var(--text-secondary);
+}
+
+[data-theme="dark"] .update-notification-simple {
+    background: var(--bg-secondary);
+    border-color: var(--accent);
+    box-shadow: 0 0 10px var(--accent), 0 0 20px var(--accent), 0 0 30px var(--accent);
+    animation: glowPulse 2s ease-in-out infinite alternate;
+}
+
+[data-theme="dark"] .update-version-simple {
+    color: var(--accent);
 }
 
 [data-theme="dark"] .update-notes {
