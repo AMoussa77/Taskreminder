@@ -305,6 +305,7 @@ class TaskManager {
         document.getElementById('alarmMinutes').value = '0';
         document.getElementById('alarmSeconds').value = '0';
         document.getElementById('alarmInputs').classList.remove('show');
+        document.getElementById('datetimeInputs').classList.remove('show');
         this.refocusInputs();
     }
 
